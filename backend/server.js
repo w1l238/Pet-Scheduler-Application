@@ -1,3 +1,4 @@
+const { sendEmail } = require('./emailService')
 require('dotenv').config();
 const pool = require('./db');
 
@@ -494,6 +495,49 @@ app.delete('/api/invoices/:id', authenticateToken, authorizeRoles(['Admin']), as
 	}
 });
 
+// --- Reminder API Endpoint ---
+app.post('/api/reminders/send', authenticateToken, authorizeRoles(['Admin']), async (req, res) => {
+	try {
+		// Find appointments in the next 24 hours that haven't been sent a reminder yet
+		const upcomingAppointments = await pool.query(
+		   `SELECT a.AppointmentID, a.AppointmentTime, c.Email, c.FirstName, p.Name as PetName
+			FROM APPOINTMENT AS a
+			JOIN CLIENT AS c ON a.ClientID = c.ClientID
+			JOING PET AS p ON a.PetID = p.PetID
+			WHERE a.AppointmentTime BETWEEN NOW() AND NOW() + INTERVAL '24 hours'
+			AND a.ReminderSent`
+		);
+
+		if (upcomingAppointments.rows.length === 0) {
+			return res.json({ message: 'No upcoming appointments to send reminders for.' });
+		}
+
+		let remindersSentCount = 0;
+		// Loop through appointments and send email
+		for (const appt of upcomingAppointments.rows) {
+			const subject = 'Appointment Reminder';
+			const text = `Hi ${appt.firstname},\n\nThis is a reminder for your upcoming appointment for 
+			${appt.petname} tomorrow at ${new Date(appt.appointmenttime).toLocaleTimeString()}.\n\nSee you soon!`;
+			const html = `<p>Hi ${appt.firstname},</p><p>This is a reminder for your upcoming appointment for
+			<strong>${appt.petname}</strong> tomorrow at <strong>${new Date(appt.appointmenttime).toLocaleTimeString()}
+			</strong>.</p><p>See you soon!</p>`;
+
+			await sendEmail(appt.email, subject, text, html);
+
+			// Mark the reminder as sent in the database
+			await pool.query(
+				'UPDATE Appointment SET ReminderSent = TRUE WHERE AppointmentID = $1',
+				[appt.appointmentid]
+			);
+			remindersSentCount++;
+		}
+
+		res.json({ message: `${remindersSentCount} reminder(s) sent successfully.` });
+	} catch (err) {
+		console.error(err.message);
+		res.status(500).send('Server error');
+	}
+});
 
 app.listen(port, () => {
 	console.log('Backend server listening at http://localhost:${port}');
