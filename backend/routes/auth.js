@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const pool = require('../db');
 const jwt = require('jsonwebtoken');
 
+const router = express.Router(); // Create an Express router to manage authentication routes
 
 // --- User Registration ---
 router.post('/register', async (req, res) => {
