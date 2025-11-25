@@ -5,11 +5,13 @@ const pool = require('./db');
 const express = require('express');
 const { authenticateToken, authorizeRoles } = require('./middleware/auth');
 const authRoutes = require('./routes/auth');
+const cors = require('cors');
 
 const app = express();
 const port = 5000;
 
 app.use(express.json()); // Middleware to parse JSON bodies
+app.use(cors()); // Enable CORS for all routes
 
 // --- Public Routes ---
 
@@ -56,17 +58,24 @@ app.get('/api/clients/:id', authenticateToken, async (req, res) => {
 });
 
 // PUT (update) a client by ID
-app.put('/api/clients/:id', authenticateToken, async (req, res) => {
+app.put('/api/clients/:id', authenticateToken, authorizeRoles(['Admin']), async (req, res) => {
 	try {
 		const { id } = req.params;
-		// Check if the authticated user is an Admin or is updating their own info
-		if (req.user.role !== 'Admin' && req.user.id !== parseInt(id, 10)) {
-			return res.status(403).json({ message: 'Access denied' });
-		}
-		const { FirstName, LastName, Email, PhoneNumber } = req.body;
+		const { Role } = req.body;
+
+        // Prevent admin from changing their own role
+        if (req.user.id === parseInt(id, 10)) {
+            return res.status(400).json({ message: 'Admins cannot change their own role.' });
+        }
+
+        // Make sure Role is provided
+        if (!Role) {
+            return res.status(400).json({ message: 'Role is required.' });
+        }
+
 		const { rows } = await pool.query(
-			'UPDATE Client SET FirstName = $1, LastName = $2, Email = $3, PhoneNumber = $4 WHERE ClientID = $5 RETURNING ClientID, FirstName, LastName, Email, PhoneNumber',
-			[FirstName, LastName, Email, PhoneNumber, id]
+			'UPDATE Client SET Role = $1 WHERE ClientID = $2 RETURNING *',
+			[Role, id]
 		);
 		if (rows.length === 0) {
 			return res.status(404).json({ message: 'Client not found' });
@@ -143,6 +152,7 @@ app.get('/api/clients/:clientId/pets', authenticateToken, async (req, res) => {
 // POST a new pet (Authenicated users for their own client ID)
 app.post('/api/pets', authenticateToken, async (req, res) => {
 	try {
+		console.log('Received pet data:', req.body);
 		const { ClientID, Name, Breed, Age, Notes } = req.body;
 		// Ensure users can only add pets to their own profile
 		if (req.user.id !== ClientID) {
@@ -216,7 +226,14 @@ app.delete('/api/pets/:id', authenticateToken , async (req, res) => {
 // GET all appointments (ADMIN ONLY)
 app.get('/api/appointments', authenticateToken, authorizeRoles(['Admin']), async (req, res) => {
 	try {
-		const { rows } = await pool.query('SELECT * FROM Appointment ORDER BY AppointmentID ASC');
+		const query = `
+            SELECT a.*, c.FirstName, c.LastName, p.Name as PetName
+            FROM Appointment a
+            JOIN Client c ON a.ClientID = c.ClientID
+            JOIN Pet p ON a.PetID = p.PetID
+            ORDER BY a.AppointmentID ASC
+        `;
+		const { rows } = await pool.query(query);
 		res.json(rows);
 	} catch (err) {
 		console.error(err.message);
@@ -228,7 +245,15 @@ app.get('/api/appointments', authenticateToken, authorizeRoles(['Admin']), async
 app.get('/api/appointments/:id', authenticateToken, async (req, res) => {
 	try {
 		const { id } = req.params;
-		const { rows } = await pool.query('SELECT * FROM Appointment WHERE AppointmentID = $1', [id]);
+		const appointmentId = parseInt(id, 10);
+		const query = `
+            SELECT a.*, c.FirstName, c.LastName, p.Name as PetName
+            FROM Appointment a
+            JOIN Client c ON a.ClientID = c.ClientID
+            JOIN Pet p ON a.PetID = p.PetID
+            WHERE a.AppointmentID = $1
+        `;
+		const { rows } = await pool.query(query, [appointmentId]);
 		if (rows.length === 0) {
 			return res.status(404).json({ message: 'Appointment not found' });
 		}
@@ -249,7 +274,15 @@ app.get('/api/clients/:clientId/appointments', authenticateToken, async (req, re
 		if (req.user.role !== 'Admin' && req.user.id !== parseInt(clientId, 10)) { 
 			return res.status(403).json({ message: 'Access denied' });
 		}
-		const { rows } = await pool.query('SELECT * FROM Appointment WHERE ClientID = $1 ORDER BY AppointmentID ASC', [clientId]);
+		const query = `
+            SELECT a.*, c.FirstName, c.LastName, p.Name as PetName
+            FROM Appointment a
+            JOIN Client c ON a.ClientID = c.ClientID
+            JOIN Pet p ON a.PetID = p.PetID
+            WHERE a.ClientID = $1
+            ORDER BY a.AppointmentID ASC
+        `;
+		const { rows } = await pool.query(query, [clientId]);
 		res.json(rows);
 	} catch (err) {
 		console.error(err.message);
@@ -280,9 +313,12 @@ app.post('/api/appointments', authenticateToken, async (req, res) => {
 app.put('/api/appointments/:id', authenticateToken, async (req, res) => {
 	try {
 		const { id } = req.params;
-		const { ClientID, PetID, ServiceID, AppointmentTime, Status, Notes } = req.body;
+		const appointmentId = parseInt(id, 10);
 
-		const aptResult = await pool.query('SELECT ClientID FROM Appointment WHERE AppointmentID = $1', [id]);
+		// Use lowercase keys to match the data sent from the frontend
+		const { clientid, petid, serviceid, appointmenttime, status, notes } = req.body;
+
+		const aptResult = await pool.query('SELECT ClientID FROM Appointment WHERE AppointmentID = $1', [appointmentId]);
 		if (aptResult.rows.length === 0) {
 			return res.status(404).json({ message: 'Appointment not found' });
 		}
@@ -292,8 +328,36 @@ app.put('/api/appointments/:id', authenticateToken, async (req, res) => {
 
 		const { rows } = await pool.query(
 			'UPDATE Appointment SET ClientID = $1, PetID = $2, ServiceID = $3, AppointmentTime = $4, Status = $5, Notes = $6 WHERE AppointmentID = $7 RETURNING *',
-			[ClientID, PetID, ServiceID, AppointmentTime, Status, Notes, id]
+			[clientid, petid, serviceid, appointmenttime, status, notes, appointmentId]
 		);
+
+		console.log('Status is:', status);
+
+		// If the appointment is marked as 'Completed', automatically create an invoice
+		if (status === 'Completed') {
+			// Get the service price
+			const serviceRes = await pool.query('SELECT Price FROM Service WHERE ServiceID = $1', [serviceid]);
+			if (serviceRes.rows.length > 0) {
+				const price = serviceRes.rows[0].price;
+
+				// Check if an invoice for this appointment already exists to prevent dupes
+				const invoiceExists = await pool.query('SELECT 1 FROM Invoice WHERE AppointmentID = $1', [id]);
+
+				if (invoiceExists.rows.length === 0) {				
+					const queryText = 'INSERT INTO Invoice (AppointmentID, Amount, Status, DueDate) VALUES ($1, $2, $3, NOW() + INTERVAL \'30 days\')';
+					const queryParams = [appointmentId, price, 'Unpaid'];
+
+					// console.log('--- DEBUG INVOICE CREATION ---');
+					// console.log('Query:', queryText);
+					// console.log('Params:', queryParams);
+					// console.log('------------------------------');
+
+					// Create the invoice with a due date 30 days from now
+					await pool.query(queryText, queryParams);
+				}
+			}
+		}
+
 		res.json(rows[0]);
 	} catch (err) {
 		console.error(err.message);
@@ -465,10 +529,11 @@ app.post('/api/invoices', authenticateToken, authorizeRoles(['Admin']), async (r
 app.put('/api/invoices/:id', authenticateToken, authorizeRoles(['Admin']), async (req, res) => {
 	try {
 		const { id } = req.params;
-		const { AppointmentID, Amount, Status, DueDate } = req.body;
+		// Use lowercase keys to match the frontend data
+		const { appointmentid, amount, status, duedate } = req.body;
 		const { rows } = await pool.query(
 			'UPDATE Invoice SET AppointmentID = $1, Amount = $2, Status = $3, DueDate = $4 WHERE InvoiceID = $5 RETURNING *',
-			[AppointmentID, Amount, Status, DueDate, id]
+			[appointmentid, amount, status, duedate, id]
 		);
 		if (rows.length === 0) {
 			return res.status(404).json({ message: 'Invoice not found' });
