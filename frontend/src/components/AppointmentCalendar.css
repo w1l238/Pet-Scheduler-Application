@@ -1,0 +1,61 @@
+.calendar-container {
+    width: 100%;
+    height: calc(100vh - 120px);
+}
+
+.full-page-calendar {
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.full-page-calendar .react-calendar__tile {
+    height: calc((100vh - 200px) / 6);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 5px;
+    transition: background-color 0.3s ease, transform 0.3s ease; /* Add transition for animation */
+}
+
+.full-page-calendar .react-calendar__tile:hover {
+    background-color: #e6e6e6; /* Lighter background on hover */
+    transform: translateY(-2px); /* Slight lift effect */
+    cursor: pointer;
+}
+
+.appointment-list-container {
+    margin-top: 5px;
+    width: 100%;
+}
+
+.appointment-info {
+    font-size: 0.75rem;
+    padding: 2px 4px;
+    border-radius: 4px;
+    margin-bottom: 3px;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Status-specific colors */
+.status-scheduled {
+    background-color: #28a745; /* Green */
+}
+
+.status-pending {
+    background-color: #ffc107; /* Yellow */
+    color: #000; /* Darker text for yellow background */
+}
+
+.status-completed {
+    background-color: #6c757d; /* Gray */
+}
+
+.status-canceled {
+    background-color: #dc3545; /* Red */
+}
