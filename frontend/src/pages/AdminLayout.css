@@ -1,0 +1,16 @@
+.admin-layout {
+    display: flex;
+}
+
+.admin-content {
+    flex-grow: 1;
+    padding: 0rem 5rem 0rem 5rem;
+    margin-left: 250px; /* Match sidebar width */
+    width: calc(100% - 250px);
+    transition: margin-left 0.3s ease, width 0.3s ease;
+}
+
+.admin-layout.collapsed .admin-content {
+    margin-left: 80px; /* Match collapsed sidebar width */
+    width: calc(100% - 80px);
+}
