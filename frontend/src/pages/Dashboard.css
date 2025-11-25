@@ -1,0 +1,406 @@
+.dashboard-container {
+    width: 90%;
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 0;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+    margin-bottom: 2rem;
+}
+
+.add-button {
+    background: linear-gradient(to right, #6a11cb, #2575fc);
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+}
+
+.add-button:hover {
+    opacity: 0.9;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+
+.section-header-with-button {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem; /* Adjust as needed */
+}
+
+.dashboard-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* New Layout Styles */
+.dashboard-layout {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+.dashboard-calendar-pane {
+    flex: 1.8; /* Give calendar more space */
+    position: sticky;
+    top: 2rem; /* Stick to top on scroll */
+}
+
+.dashboard-cards-pane {
+    flex: 1;
+}
+/* End New Layout Styles */
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2 equal columns */
+    gap: 1.5rem; /* Slightly smaller gap */
+}
+
+.dashboard-card {
+    background: #fff;
+    padding: 1.5rem; /* Reduced padding */
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.dashboard-card h2 {
+    font-size: 1.3rem; /* Smaller heading */
+    margin-bottom: 1rem;
+    color: #6a11cb;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 0.5rem;
+}
+
+.dashboard-card p {
+    font-size: 0.9rem;
+    color: #666;
+    flex-grow: 1;
+}
+
+
+.dashboard-list {
+    list-style: none;
+    padding: 0;
+    margin-top: 1rem; /* Add some space above the list */
+}
+
+.dashboard-list-item {
+    padding: 1.2rem 1.5rem; /* Increased padding for taller items */
+    margin-bottom: 1rem; /* Space between items */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #eee; /* Add a subtle border */
+}
+
+.dashboard-list-item:last-child {
+    margin-bottom: 0; /* No margin for the last item */
+}
+
+.dashboard-list-item:hover {
+    transform: translateY(-3px); /* Lift effect on hover */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* More pronounced shadow on hover */
+}
+
+.item-details {
+    flex-grow: 1;
+}
+
+.item-actions {
+    margin-left: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.status-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: bold; /* Make status text bolder */
+}
+
+.status-line {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+
+/* More noticeable background colors for status */
+.status-bg-pending {
+    background-color: #fff3cd; /* Light orange/yellow */
+    border-left: 5px solid #ffc107;
+}
+.status-bg-scheduled {
+    background-color: #d4edda; /* Light green */
+    border-left: 5px solid #28a745;
+}
+.status-bg-completed {
+    background-color: #e2e6ea; /* Light gray */
+    border-left: 5px solid #6c757d;
+}
+.status-bg-canceled {
+    background-color: #f8d7da; /* Light red */
+    border-left: 5px solid #dc3545;
+}
+
+/* Invoice Statuses */
+.status-bg-unpaid {
+    background-color: #fff3cd; /* Same as pending */
+    border-left: 5px solid #ffc107;
+}
+.status-bg-paid {
+    background-color: #d4edda; /* Same as scheduled/completed */
+    border-left: 5px solid #28a745;
+}
+
+.highlighted {
+    background-color: #cce5ff !important; /* A persistent light blue background */
+    border-left-color: #007bff !important;
+    transition: all 0.3s ease;
+}
+
+.dashboard-list-item.highlighted:hover {
+    background-color: #b8daff !important; /* A slightly darker blue on hover */
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+
+
+.dashboard-list-item:last-child {
+    border-bottom: none;
+}
+
+.dashboard-list-item:hover {
+    background-color: #f9f9f9;
+}
+
+.dashboard-list-item strong {
+    color: #555;
+}
+
+.dashboard-form .form-group {
+    margin-bottom: 1rem;
+}
+
+.dashboard-form input,
+.dashboard-form select,
+.dashboard-form textarea {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+.dashboard-form button {
+    width: 100%;
+    padding: 0.8rem;
+    border: none;
+    border-radius: 4px;
+    background: linear-gradient(to right, #6a11cb, #2575fc);
+    color: white;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+    margin-top: 1rem;
+}
+
+.dashboard-form button:hover {
+    opacity: 0.9;
+}
+
+.delete-button {
+    background: #ff4d4d !important;
+    color: white !important;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem !important;
+    transition: background 0.2s ease;
+}
+
+.delete-button:hover {
+    background: #cc0000 !important;
+}
+
+.edit-button {
+    background: #ffc107 !important;
+    color: #212529 !important;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem !important;
+    transition: background 0.2s ease;
+}
+
+.edit-button:hover {
+    background: #e0a800 !important;
+}
+
+.approve-button, .complete-button, .paid-button {
+    background: #28a745 !important;
+    color: white !important;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem !important;
+    transition: background 0.2s ease;
+}
+
+.approve-button:hover, .complete-button:hover, .paid-button:hover {
+    background: #218838 !important;
+}
+
+.btn-view-all {
+    display: inline-block;
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    background: linear-gradient(to right, #6a11cb, #2575fc);
+    color: white;
+    font-size: 1rem;
+    font-weight: bold;
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+    margin-top: 1rem;
+}
+
+.btn-view-all:hover {
+    opacity: 0.9;
+}
+
+
+/* Styles for search and sort controls */
+.controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.search-input {
+    flex-grow: 1;
+    padding: 0.7rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.sort-select, .filter-select {
+    padding: 0.7rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    background-color: #fff;
+}
+
+/* Service Manager Layout */
+.service-manager-layout {
+    display: flex;
+    flex-direction: column; /* Stack header and content vertically */
+}
+
+.service-manager-content {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+.existing-services-pane {
+    flex: 2; /* Takes more space */
+    min-width: 500px; /* Minimum width to prevent squishing */
+}
+
+.add-service-pane {
+    flex: 1; /* Takes less space */
+    min-width: 250px; /* Minimum width for the form */
+}
+
+.dashboard-full-height {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 80px - 4rem); /* Full height minus navbar and padding */
+}
+
