@@ -568,7 +568,7 @@ app.post('/api/reminders/send', authenticateToken, authorizeRoles(['Admin']), as
 		   `SELECT a.AppointmentID, a.AppointmentTime, c.Email, c.FirstName, p.Name as PetName
 			FROM APPOINTMENT AS a
 			JOIN CLIENT AS c ON a.ClientID = c.ClientID
-			JOING PET AS p ON a.PetID = p.PetID
+			JOIN PET AS p ON a.PetID = p.PetID
 			WHERE a.AppointmentTime BETWEEN NOW() AND NOW() + INTERVAL '24 hours'
 			AND a.ReminderSent`
 		);
