@@ -20,6 +20,10 @@ import AllPetsPage from './pages/AllPetsPage';
 import ManageServicesPage from './pages/ManageServicesPage';
 import AdminLayout from './pages/AdminLayout';
 
+import ClientLayout from './pages/ClientLayout';
+import ClientPetsPage from './pages/ClientPetsPage';
+import ClientAppointmentsPage from './pages/ClientAppointmentsPage';
+
 function App() {
   return (
     <Router>
@@ -44,8 +48,11 @@ function App() {
 
         {/* Protected Client Route */}
         <Route element={<PrivateRoute allowedRoles={['Client', 'Admin']} />}>
-          {/* Admin can also access client dashboard */}
-          <Route path="/client/dashboard" element={<ClientDashboard />} />
+          <Route element={<ClientLayout />}>
+            <Route path="/client/dashboard" element={<ClientDashboard />} />
+            <Route path="/client/pets" element={<ClientPetsPage />} />
+            <Route path="/client/appointments" element={<ClientAppointmentsPage />} />
+          </Route>
         </Route>
        
        {/* Not Found Route */}
