@@ -136,9 +136,14 @@ function AllAppointments() {
                             </div>
                             <div className="item-actions">
                                 {appt.status === 'Pending' && (
-                                    <button onClick={() => handleUpdateStatus(appt.appointmentid, 'Scheduled')} className="approve-button">
-                                        Approve
-                                    </button>
+                                    <>
+                                        <button onClick={() => handleUpdateStatus(appt.appointmentid, 'Scheduled')} className="approve-button">
+                                            Approve
+                                        </button>
+                                        <button onClick={() => handleUpdateStatus(appt.appointmentid, 'Canceled')} className="deny-button">
+                                            Deny
+                                        </button>
+                                    </>
                                 )}
                                 {appt.status === 'Scheduled' && (
                                     <button onClick={() => handleUpdateStatus(appt.appointmentid, 'Completed')} className="complete-button">
