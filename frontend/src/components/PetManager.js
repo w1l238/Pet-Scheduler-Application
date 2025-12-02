@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
+import EditPetModal from './EditPetModal';
 
 const decodeToken = (token) => {
     try {
@@ -15,6 +16,8 @@ function PetManager({ version, onPetDeleted }) {
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [sortCriteria, setSortCriteria] = useState('name-asc');
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedPet, setSelectedPet] = useState(null);
 
     useEffect(() => {
         const fetchPets = async () => {
@@ -58,6 +61,22 @@ function PetManager({ version, onPetDeleted }) {
                 setError('Failed to delete pet. Please try again.');
             }
         }
+    };
+
+    const openEditModal = (pet) => {
+        setSelectedPet(pet);
+        setIsEditModalOpen(true);
+    };
+
+    const closeEditModal = () => {
+        setSelectedPet(null);
+        setIsEditModalOpen(false);
+    };
+
+    const handlePetUpdated = () => {
+        closeEditModal();
+        // Refresh the list by notifying the parent
+        onPetDeleted();
     };
 
     const filteredAndSortedPets = pets
@@ -119,6 +138,9 @@ function PetManager({ version, onPetDeleted }) {
                                 {pet.notes && <p>Notes: {pet.notes}</p>}
                             </div>
                             <div className="item-actions">
+                                <button onClick={() => openEditModal(pet)} className="edit-button">
+                                    Edit
+                                </button>
                                 <button onClick={() => handleDeletePet(pet.petid)} className="delete-button">
                                     Delete
                                 </button>
@@ -126,6 +148,14 @@ function PetManager({ version, onPetDeleted }) {
                         </li>
                     ))}
                 </ul>
+            )}
+
+            {isEditModalOpen && (
+                <EditPetModal
+                    pet={selectedPet}
+                    onClose={closeEditModal}
+                    onPetUpdated={handlePetUpdated}
+                />
             )}
         </div>
     );
