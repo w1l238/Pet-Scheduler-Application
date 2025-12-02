@@ -44,7 +44,8 @@ function AllPets() {
             return (
                 pet.name.toLowerCase().includes(searchTermLower) ||
                 (pet.breed && pet.breed.toLowerCase().includes(searchTermLower)) ||
-                pet.clientid.toString().includes(searchTermLower)
+                (pet.firstname && pet.firstname.toLowerCase().includes(searchTermLower)) ||
+                (pet.lastname && pet.lastname.toLowerCase().includes(searchTermLower))
             );
         })
         .sort((a, b) => {
@@ -78,7 +79,7 @@ function AllPets() {
             <div className="controls">
                 <input
                     type="text"
-                    placeholder="Search by Name, Breed, or Client ID"
+                    placeholder="Search by Name, Breed, or Client Name"
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                     className="search-input"
@@ -100,7 +101,7 @@ function AllPets() {
                                 <strong>Name:</strong> {pet.name} <br />
                                 <strong>Breed:</strong> {pet.breed || 'N/A'} <br />
                                 <strong>Age:</strong> {pet.age || 'N/A'} <br />
-                                <strong>Client ID:</strong> {pet.clientid}
+                                <strong>Client:</strong> {pet.firstname} {pet.lastname}
                             </div>
                             <div className="item-actions">
                                 <button onClick={() => handleDeletePet(pet.petid)} className="delete-button">
