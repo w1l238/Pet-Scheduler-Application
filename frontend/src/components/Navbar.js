@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FiLogOut, FiLogIn, FiUserPlus, FiUser } from 'react-icons/fi'; // Import login/out, and register icons
 import { FaDog } from 'react-icons/fa' // Dog Icon
 import { MdOutlineSpaceDashboard } from 'react-icons/md'; // Dashboard Icon
+import Notifications from './Notifications'; // Import the new Notifications component
+import ClientNotifications from './ClientNotifications'; // Import the new ClientNotifications component
 import './Navbar.css';
 
 const decodeToken = (token) => {
@@ -33,6 +35,16 @@ function Navbar() {
                 <ul className="nav-menu">
                     {token ? (
                         <>
+                            {userRole === 'Admin' && (
+                                <li className="nav-item">
+                                    <Notifications />
+                                </li>
+                            )}
+                            {userRole === 'Client' && (
+                                <li className="nav-item">
+                                    <ClientNotifications />
+                                </li>
+                            )}
                             <li className="nav-item">
                                 {userRole === 'Admin' ? (
                                     <Link to="/admin/dashboard" className="nav-links">
