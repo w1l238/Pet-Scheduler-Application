@@ -231,14 +231,24 @@ app.delete('/api/pets/:id', authenticateToken , async (req, res) => {
 // GET all appointments (ADMIN ONLY)
 app.get('/api/appointments', authenticateToken, authorizeRoles(['Admin']), async (req, res) => {
 	try {
-		const query = `
+		const { status } = req.query; // Get status from query params
+
+        let query = `
             SELECT a.*, c.FirstName, c.LastName, p.Name as PetName
             FROM Appointment a
             JOIN Client c ON a.ClientID = c.ClientID
             JOIN Pet p ON a.PetID = p.PetID
-            ORDER BY a.AppointmentID ASC
         `;
-		const { rows } = await pool.query(query);
+        const params = [];
+
+        if (status) {
+            query += ' WHERE a.Status = $1';
+            params.push(status);
+        }
+
+        query += ' ORDER BY a.AppointmentID ASC';
+
+		const { rows } = await pool.query(query, params);
 		res.json(rows);
 	} catch (err) {
 		console.error(err.message);
@@ -335,6 +345,19 @@ app.put('/api/appointments/:id', authenticateToken, async (req, res) => {
 			'UPDATE Appointment SET ClientID = $1, PetID = $2, ServiceID = $3, AppointmentTime = $4, Status = $5, Notes = $6 WHERE AppointmentID = $7 RETURNING *',
 			[clientid, petid, serviceid, appointmenttime, status, notes, appointmentId]
 		);
+
+		// If the status has changed, create a notification for the client
+		if (req.user.role === 'Admin' && status && status !== aptResult.rows[0].status) {
+			const petRes = await pool.query('SELECT Name FROM Pet WHERE PetID = $1', [petid]);
+			const petName = petRes.rows.length > 0 ? petRes.rows[0].name : 'your pet';
+			
+			const message = `Your appointment for ${petName} at ${new Date(appointmenttime).toLocaleString()} has been updated to "${status}".`;
+			
+			await pool.query(
+				'INSERT INTO Notification (ClientID, Message, Link) VALUES ($1, $2, $3)',
+				[clientid, message, '/client/appointments']
+			);
+		}
 
 		console.log('Status is:', status);
 
@@ -564,6 +587,40 @@ app.delete('/api/invoices/:id', authenticateToken, authorizeRoles(['Admin']), as
 		res.status(500).send('Server error');
 	}
 });
+
+
+// --- Notification API Endpoints ---
+
+// GET unread notifications for the logged-in client
+app.get('/api/client/notifications', authenticateToken, authorizeRoles(['Client']), async (req, res) => {
+    try {
+        const clientId = req.user.id;
+        const { rows } = await pool.query(
+            'SELECT * FROM Notification WHERE ClientID = $1 AND IsRead = FALSE ORDER BY CreatedAt DESC',
+            [clientId]
+        );
+        res.json(rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
+// PUT mark all notifications as read for the logged-in client
+app.put('/api/notifications/read-all', authenticateToken, authorizeRoles(['Client']), async (req, res) => {
+    try {
+        const clientId = req.user.id;
+        await pool.query(
+            'UPDATE Notification SET IsRead = TRUE WHERE ClientID = $1',
+            [clientId]
+        );
+        res.status(204).send(); // No content
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
 
 // --- Reminder API Endpoint ---
 app.post('/api/reminders/send', authenticateToken, authorizeRoles(['Admin']), async (req, res) => {
