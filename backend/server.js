@@ -107,7 +107,12 @@ app.delete('/api/clients/:id', authenticateToken, authorizeRoles(['Admin']), asy
 // GET all pets (ADMIN ONLY)
 app.get('/api/pets', authenticateToken, authorizeRoles(['Admin']), async (req, res) => {
 	try {
-		const { rows } = await pool.query('SELECT * FROM Pet ORDER BY PetID ASC');
+		const { rows } = await pool.query(`
+            SELECT p.*, c.FirstName, c.LastName
+            FROM Pet p
+            JOIN Client c ON p.ClientID = c.ClientID
+            ORDER BY p.PetID ASC
+        `);
 		res.json(rows);
 	} catch (err) {
 		console.error(err.message);
