@@ -61,25 +61,31 @@ app.get('/api/clients/:id', authenticateToken, async (req, res) => {
 app.put('/api/clients/:id', authenticateToken, authorizeRoles(['Admin']), async (req, res) => {
 	try {
 		const { id } = req.params;
-		const { Role } = req.body;
+		const updates = req.body;
 
         // Prevent admin from changing their own role
-        if (req.user.id === parseInt(id, 10)) {
+        if (req.user.id === parseInt(id, 10) && updates.Role && updates.Role !== 'Admin') {
             return res.status(400).json({ message: 'Admins cannot change their own role.' });
         }
 
-        // Make sure Role is provided
-        if (!Role) {
-            return res.status(400).json({ message: 'Role is required.' });
+		// Fetch the current client data
+        const currentClientResult = await pool.query('SELECT * FROM Client WHERE ClientID = $1', [id]);
+        if (currentClientResult.rows.length === 0) {
+            return res.status(404).json({ message: 'Client not found' });
         }
+        const currentClient = currentClientResult.rows[0];
+
+		// Merge updates with current data
+        const newClientData = { ...currentClient, ...updates };
+		// Sanitize to only include columns that exist in the table
+		const { FirstName, LastName, Email, PhoneNumber, Role } = newClientData;
+
 
 		const { rows } = await pool.query(
-			'UPDATE Client SET Role = $1 WHERE ClientID = $2 RETURNING *',
-			[Role, id]
+			'UPDATE Client SET FirstName = $1, LastName = $2, Email = $3, PhoneNumber = $4, Role = $5 WHERE ClientID = $6 RETURNING ClientID, FirstName, LastName, Email, PhoneNumber, Role',
+			[FirstName, LastName, Email, PhoneNumber, Role, id]
 		);
-		if (rows.length === 0) {
-			return res.status(404).json({ message: 'Client not found' });
-		}
+		
 		res.json(rows[0]);
 	} catch (err) {
 		console.error(err.message);
@@ -500,7 +506,18 @@ app.delete('/api/services/:id', authenticateToken, authorizeRoles(['Admin']), as
 // GET all invoices
 app.get('/api/invoices', authenticateToken, authorizeRoles(['Admin']), async (req, res) => {
 	try {
-		const { rows } = await pool.query('SELECT * FROM Invoice ORDER BY InvoiceID ASC');
+		const { rows } = await pool.query(`
+            SELECT 
+                i.*, 
+                c.FirstName, 
+                c.LastName, 
+                p.Name as PetName 
+            FROM Invoice i
+            JOIN Appointment a ON i.AppointmentID = a.AppointmentID
+            JOIN Client c ON a.ClientID = c.ClientID
+            JOIN Pet p ON a.PetID = p.PetID
+            ORDER BY i.InvoiceID ASC
+        `);
 		res.json(rows);
 	} catch (err) {
 		console.error(err.message);
