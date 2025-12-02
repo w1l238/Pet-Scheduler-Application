@@ -59,3 +59,14 @@ CREATE TABLE Invoice (
 	CreatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (AppointmentID) REFERENCES Appointment(AppointmentID) ON DELETE CASCADE
 );
+
+-- Notification Table
+CREATE TABLE Notification (
+    NotificationID SERIAL PRIMARY KEY,
+    ClientID INT NOT NULL,
+    Message TEXT NOT NULL,
+    IsRead BOOLEAN DEFAULT FALSE,
+    Link VARCHAR(255), -- Optional link for navigation
+    CreatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ClientID) REFERENCES Client(ClientID) ON DELETE CASCADE
+);
