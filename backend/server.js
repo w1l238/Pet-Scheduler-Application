@@ -437,6 +437,26 @@ app.get('/api/services', authenticateToken, async (req, res) => {
 	}
 });
 
+// GET service usage statistics
+app.get('/api/services/stats', authenticateToken, authorizeRoles(['Admin']), async (req, res) => {
+    try {
+        const { rows } = await pool.query(`
+            SELECT ServiceID, COUNT(AppointmentID) as usage_count
+            FROM Appointment
+            GROUP BY ServiceID
+        `);
+        // Convert array to a map for easier lookup on the frontend
+        const statsMap = rows.reduce((acc, row) => {
+            acc[row.serviceid] = row.usage_count;
+            return acc;
+        }, {});
+        res.json(statsMap);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
 // GET a single service by ID
 app.get('/api/services/:id', authenticateToken, async (req, res) => {
 	try {
@@ -497,9 +517,10 @@ app.delete('/api/services/:id', authenticateToken, authorizeRoles(['Admin']), as
 		res.json({ message: 'Service deleted successfully' });
 	} catch (err) {
 		console.error(err.message);
-		res.status(500).send('Service error');
+		res.status(500).send('Server error');
 	}
 });
+
 
 // --- Invoice API Endpoints --- (ADMIN ONLY)
 
