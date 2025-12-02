@@ -1,0 +1,74 @@
+/* ClientNotifications.css */
+
+.client-notifications {
+    position: relative;
+}
+
+.client-notifications-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 350px;
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 1000;
+    color: #333;
+}
+
+.client-notifications-header {
+    padding: 12px 16px;
+    font-weight: bold;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mark-all-read-button {
+    background: none;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.mark-all-read-button:hover {
+    text-decoration: underline;
+}
+
+.client-notification-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.client-notification-item:hover {
+    background-color: #f8f9fa;
+}
+
+
+.client-notification-item:last-child {
+    border-bottom: none;
+}
+
+.client-notification-item p {
+    margin: 0 0 4px 0;
+}
+
+.notification-timestamp {
+    font-size: 12px;
+    color: #888;
+}
+
+.no-client-notifications {
+    padding: 20px;
+    text-align: center;
+    color: #888;
+}
