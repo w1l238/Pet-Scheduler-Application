@@ -302,6 +302,21 @@ input:checked + .slider:before {
     background: #cc0000 !important;
 }
 
+.deny-button {
+    background: #dc3545 !important; /* Bootstrap danger red */
+    color: white !important;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem !important;
+    transition: background 0.2s ease;
+}
+
+.deny-button:hover {
+    background: #c82333 !important; /* Darker red on hover */
+}
+
 .edit-button {
     background: #ffc107 !important;
     color: #212529 !important;
