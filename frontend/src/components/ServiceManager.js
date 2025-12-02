@@ -1,41 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
-import EditServiceModal from './EditServiceModal';
-import AddServiceModal from './AddServiceModal';
+import ServiceForm from './ServiceForm'; // Import the new unified form
+import { FiBarChart2 } from 'react-icons/fi'; // Icon for stats
 
 function ServiceManager() {
     const [services, setServices] = useState([]);
+    const [serviceStats, setServiceStats] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [version, setVersion] = useState(0); // To trigger re-fetch
+    const [version, setVersion] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortCriteria, setSortCriteria] = useState('name-asc');
     const [editingService, setEditingService] = useState(null);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     useEffect(() => {
-        const fetchServices = async () => {
+        const fetchData = async () => {
             setLoading(true);
             try {
-                const res = await api.get('/services');
-                setServices(res.data);
+                // Fetch both services and their usage stats concurrently
+                const [servicesRes, statsRes] = await Promise.all([
+                    api.get('/services'),
+                    api.get('/services/stats')
+                ]);
+                setServices(servicesRes.data);
+                setServiceStats(statsRes.data);
             } catch (err) {
-                setError('Failed to fetch services.');
+                setError('Failed to fetch service data.');
                 console.error(err);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchServices();
+        fetchData();
     }, [version]);
 
     const handleDeleteService = async (serviceId) => {
         if (window.confirm('Are you sure you want to delete this service?')) {
             try {
                 await api.delete(`/services/${serviceId}`);
-                setVersion(v => v + 1); // Re-fetch services
+                setVersion(v => v + 1); // Re-fetch data
             } catch (err) {
                 console.error('Failed to delete service', err);
                 setError('Failed to delete service. Please try again.');
@@ -43,27 +47,13 @@ function ServiceManager() {
         }
     };
 
-    // Edit Modal
-    const openEditModal = (service) => {
-        setEditingService(service);
-        setIsEditModalOpen(true);
+    const handleSave = () => {
+        setEditingService(null); // Clear the form after save
+        setVersion(v => v + 1); // Re-fetch data to show changes
     };
 
-    const closeEditModal = () => {
+    const handleClearForm = () => {
         setEditingService(null);
-        setIsEditModalOpen(false);
-    };
-
-    const handleServiceUpdated = () => {
-        setVersion(v => v + 1); // Re-fetch services
-    };
-
-    // Add Modal
-    const openAddModal = () => setIsAddModalOpen(true);
-    const closeAddModal = () => setIsAddModalOpen(false);
-
-    const handleServiceAdded = () => {
-        setVersion(v => v + 1); // Re-fetch services
     };
 
     const filteredAndSortedServices = services
@@ -103,66 +93,70 @@ function ServiceManager() {
             <header className="dashboard-header">
                 <h1>Manage Services</h1>
             </header>
-            <div className="existing-services-pane">
-                <div className="section-header-with-button">
+            <div className="service-manager-content">
+                {/* Left Pane: Existing Services List */}
+                <div className="existing-services-pane">
                     <h2>Existing Services</h2>
-                    <button onClick={openAddModal} className="add-button">Add Service</button>
+                    <div className="controls">
+                        <input
+                            type="text"
+                            placeholder="Search by Name, Description, or Price"
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className="search-input"
+                        />
+                        <select value={sortCriteria} onChange={e => setSortCriteria(e.target.value)} className="sort-select">
+                            <option value="name-asc">Name A-Z</option>
+                            <option value="name-desc">Name Z-A</option>
+                            <option value="price-asc">Price (Low to High)</option>
+                            <option value="price-desc">Price (High to Low)</option>
+                        </select>
+                    </div>
+                    {filteredAndSortedServices.length === 0 ? (
+                        <p>No services matching your criteria.</p>
+                    ) : (
+                        <ul className="dashboard-list">
+                            {filteredAndSortedServices.map(service => (
+                                <li 
+                                    key={service.serviceid} 
+                                    className="dashboard-list-item" 
+                                    onClick={(e) => {
+                                        const clickedItem = e.currentTarget;
+                                        setEditingService(service);
+                                        clickedItem.classList.add('bounce-animation');
+                                        setTimeout(() => {
+                                            clickedItem.classList.remove('bounce-animation');
+                                        }, 200); // Match animation duration
+                                    }}
+                                >
+                                    <div className="item-details">
+                                        <strong>{service.name}</strong> <br />
+                                        <span>${service.price} | {service.durationminutes || 'N/A'} mins</span>
+                                        <p style={{fontSize: '0.9rem', color: '#666', marginTop: '4px'}}>{service.description || 'No description.'}</p>
+                                        <span className="status-line" title="Usage Count">
+                                            <FiBarChart2 /> {serviceStats[service.serviceid] || 0} bookings
+                                        </span>
+                                    </div>
+                                    <div className="item-actions">
+                                        <button onClick={(e) => { e.stopPropagation(); handleDeleteService(service.serviceid); }} className="delete-button">
+                                            Delete
+                                        </button>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
                 </div>
-                
-                <div className="controls">
-                    <input
-                        type="text"
-                        placeholder="Search by Name, Description, or Price"
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        className="search-input"
-                    />
-                    <select value={sortCriteria} onChange={e => setSortCriteria(e.target.value)} className="sort-select">
-                        <option value="name-asc">Name A-Z</option>
-                        <option value="name-desc">Name Z-A</option>
-                        <option value="price-asc">Price (Low to High)</option>
-                        <option value="price-desc">Price (High to Low)</option>
-                    </select>
-                </div>
-                {filteredAndSortedServices.length === 0 ? (
-                    <p>No services matching your criteria.</p>
-                ) : (
-                    <ul className="dashboard-list">
-                        {filteredAndSortedServices.map(service => (
-                            <li key={service.serviceid} className="dashboard-list-item">
-                                <div className="item-details">
-                                    <strong>Name:</strong> {service.name} <br />
-                                    <strong>Price:</strong> ${service.price} <br />
-                                    <strong>Duration:</strong> {service.durationminutes || 'N/A'} mins <br />
-                                    <strong>Description:</strong> {service.description || 'No description.'}
-                                </div>
-                                <div className="item-actions">
-                                    <button onClick={() => openEditModal(service)} className="edit-button">
-                                        Edit
-                                    </button>
-                                    <button onClick={() => handleDeleteService(service.serviceid)} className="delete-button">
-                                        Delete
-                                    </button>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-            </div>
 
-            {isAddModalOpen && (
-                <AddServiceModal
-                    onClose={closeAddModal}
-                    onServiceAdded={handleServiceAdded}
-                />
-            )}
-            {isEditModalOpen && (
-                <EditServiceModal
-                    service={editingService}
-                    onClose={closeEditModal}
-                    onServiceUpdated={handleServiceUpdated}
-                />
-            )}
+                {/* Right Pane: Add/Edit Form */}
+                <div className="add-service-pane">
+                    <ServiceForm 
+                        serviceToEdit={editingService}
+                        onSave={handleSave}
+                        onClear={handleClearForm}
+                    />
+                </div>
+            </div>
         </div>
     );
 }
