@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
+import EditClientModal from './EditClientModal'; // Import the modal
 
 const decodeToken = (token) => {
     try {
@@ -17,6 +18,10 @@ function AllClients() {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortCriteria, setSortCriteria] = useState('name-asc');
     const [currentUserId, setCurrentUserId] = useState(null);
+
+    // State for the modal
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingClient, setEditingClient] = useState(null);
 
     useEffect(() => {
         const fetchClients = async () => {
@@ -42,7 +47,7 @@ function AllClients() {
     }, [version]);
 
     const handleDeleteClient = async (clientId) => {
-        if (window.confirm('Are you sure you want to delete this client and all associated data?')) {
+        if (window.confirm('Are you sure you want to delete this client and all associated data? This action cannot be undone.')) {
             try {
                 await api.delete(`/clients/${clientId}`);
                 setVersion(v => v + 1); // Trigger re-fetch
@@ -53,15 +58,21 @@ function AllClients() {
         }
     };
 
-    const handleRoleChange = async (client) => {
-        const newRole = client.role === 'Admin' ? 'Client' : 'Admin';
-        try {
-            await api.put(`/clients/${client.clientid}`, { Role: newRole });
-            setVersion(v => v + 1);
-        } catch (err) {
-            console.error('Failed to update role', err);
-            setError(err.response?.data?.message || 'Failed to update role.');
-        }
+    const handleOpenEditModal = (client) => {
+        setEditingClient(client);
+        setIsEditModalOpen(true);
+    };
+
+    const handleCloseEditModal = () => {
+        setEditingClient(null);
+        setIsEditModalOpen(false);
+    };
+
+    const handleSaveClient = (updatedClient) => {
+        // Close the modal first to prevent flickering
+        handleCloseEditModal();
+        // Then, update the state locally for a snappy UI response
+        setClients(clients.map(c => c.clientid === updatedClient.clientid ? updatedClient : c));
     };
 
     const filteredAndSortedClients = clients
@@ -124,27 +135,34 @@ function AllClients() {
                         <li key={client.clientid} className="dashboard-list-item">
                             <div className="item-details">
                                 <strong>Name:</strong> {client.firstname} {client.lastname} <br />
-                                <strong>Email:</strong> {client.email}
+                                <strong>Email:</strong> {client.email} <br />
+                                <strong>Role:</strong> {client.role}
                             </div>
                             <div className="item-actions">
-                                <span className="role-display"><strong>Role:</strong> {client.role}</span>
-                                {currentUserId !== client.clientid && (
-                                    <label className="toggle-switch">
-                                        <input
-                                            type="checkbox"
-                                            checked={client.role === 'Admin'}
-                                            onChange={() => handleRoleChange(client)}
-                                        />
-                                        <span className="slider"></span>
-                                    </label>
-                                )}
-                                <button onClick={() => handleDeleteClient(client.clientid)} className="delete-button">
-                                    Delete
+                                <button onClick={() => handleOpenEditModal(client)} className="edit-button">
+                                    Edit
                                 </button>
+                                {currentUserId !== client.clientid && (
+                                    <button 
+                                        onClick={() => handleDeleteClient(client.clientid)} 
+                                        className="delete-button"
+                                        title="Delete Client"
+                                    >
+                                        Delete
+                                    </button>
+                                )}
                             </div>
                         </li>
                     ))}
                 </ul>
+            )}
+
+            {isEditModalOpen && (
+                <EditClientModal
+                    client={editingClient}
+                    onClose={handleCloseEditModal}
+                    onSave={handleSaveClient}
+                />
             )}
         </div>
     );
