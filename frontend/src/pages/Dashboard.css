@@ -164,6 +164,7 @@ input:checked + .slider:before {
     justify-content: space-between;
     align-items: center;
     border: 1px solid #eee; /* Add a subtle border */
+    cursor: pointer; /* Add pointer cursor to indicate it's clickable */
 }
 
 .dashboard-list-item:last-child {
@@ -173,6 +174,17 @@ input:checked + .slider:before {
 .dashboard-list-item:hover {
     transform: translateY(-3px); /* Lift effect on hover */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* More pronounced shadow on hover */
+}
+
+/* Bounce Click Animation */
+@keyframes bounce-click {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.98); }
+    100% { transform: scale(1); }
+}
+
+.bounce-animation {
+    animation: bounce-click 0.2s ease-out;
 }
 
 .item-details {
@@ -427,18 +439,19 @@ input:checked + .slider:before {
 
 .service-manager-content {
     display: flex;
+    flex-direction: row;
     gap: 2rem;
-    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    align-items: flex-start;
 }
 
 .existing-services-pane {
-    flex: 2; /* Takes more space */
-    min-width: 500px; /* Minimum width to prevent squishing */
+    flex: 1.8; /* Takes more space */
 }
 
 .add-service-pane {
     flex: 1; /* Takes less space */
-    min-width: 250px; /* Minimum width for the form */
+    position: sticky;
+    top: 100px; /* Adjust based on navbar height */
 }
 
 .dashboard-full-height {
