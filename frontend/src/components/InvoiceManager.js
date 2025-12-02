@@ -52,14 +52,24 @@ function InvoiceManager() {
         }
     };
 
+    // Calculate financial metrics
+    const totalCollected = invoices
+        .filter(inv => inv.status === 'Paid')
+        .reduce((acc, inv) => acc + parseFloat(inv.amount), 0);
+
+    const totalOutstanding = invoices
+        .filter(inv => inv.status === 'Unpaid')
+        .reduce((acc, inv) => acc + parseFloat(inv.amount), 0);
+
+
     const filteredAndSortedInvoices = invoices
         .filter(invoice => {
             const searchTermLower = searchTerm.toLowerCase();
+            const clientName = `${invoice.firstname} ${invoice.lastname}`.toLowerCase();
             return (
-                invoice.invoiceid.toString().includes(searchTermLower) ||
-                invoice.appointmentid.toString().includes(searchTermLower) ||
-                invoice.status.toLowerCase().includes(searchTermLower) ||
-                invoice.amount.toString().includes(searchTermLower)
+                clientName.includes(searchTermLower) ||
+                (invoice.petname && invoice.petname.toLowerCase().includes(searchTermLower)) ||
+                invoice.status.toLowerCase().includes(searchTermLower)
             );
         })
         .sort((a, b) => {
@@ -89,11 +99,24 @@ function InvoiceManager() {
         <div>
             <header class="dashboard-header">
                     <h1>All Invoices</h1>
-                </header>
+            </header>
+
+            {/* Financial Metrics Summary */}
+            <div className="summary-metrics-grid">
+                <div className="metric-card">
+                    <h2>Total Collected</h2>
+                    <p>${totalCollected.toFixed(2)}</p>
+                </div>
+                <div className="metric-card">
+                    <h2>Total Outstanding</h2>
+                    <p>${totalOutstanding.toFixed(2)}</p>
+                </div>
+            </div>
+
             <div className="controls">
                 <input
                     type="text"
-                    placeholder="Search by ID, Amount, or Status"
+                    placeholder="Search by Client, Pet, or Status"
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                     className="search-input"
@@ -112,8 +135,8 @@ function InvoiceManager() {
                     {filteredAndSortedInvoices.map(invoice => (
                         <li key={invoice.invoiceid} className={`dashboard-list-item status-bg-${invoice.status.toLowerCase()}`}>
                             <div className="item-details">
-                                <strong>Invoice #{invoice.invoiceid}</strong> for <Link to="/admin/appointments" state={{ highlightedId: invoice.appointmentid }}>Appointment #{invoice.appointmentid}</Link> <br />
-                                <strong>Amount:</strong> ${invoice.amount} <br />
+                                <strong>Invoice #{invoice.invoiceid}</strong> | <strong>Client:</strong> {invoice.firstname} {invoice.lastname} | <strong>Pet:</strong> {invoice.petname} <br />
+                                <strong>Amount:</strong> ${invoice.amount} | <strong>For:</strong> <Link to="/admin/appointments" state={{ highlightedId: invoice.appointmentid }}>Appointment #{invoice.appointmentid}</Link> <br />
                                 <span className="status-line">
                                     <strong className="status-text">
                                         {statusIcons[invoice.status]}
