@@ -58,6 +58,49 @@
     border-bottom: none;
 }
 
+.notification-title {
+    font-weight: bold;
+    font-size: 15px;
+    margin-bottom: 8px;
+    color: #6a11cb;
+}
+
+.notification-details p {
+    margin: 4px 0;
+    font-size: 14px;
+}
+
+.notification-details strong {
+    color: #555;
+}
+
+.status-badge {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #fff;
+    text-transform: capitalize;
+}
+
+.status-scheduled {
+    background-color: #28a745;
+}
+
+.status-completed {
+    background-color: #6c757d;
+}
+
+.status-canceled {
+    background-color: #dc3545;
+}
+
+.status-pending {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+
 .client-notification-item p {
     margin: 0 0 4px 0;
 }
