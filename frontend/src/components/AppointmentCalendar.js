@@ -1,64 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Calendar from 'react-calendar';
-import api from '../api';
-import AppointmentDetailsModal from './AppointmentDetailsModal';
 import './AppointmentCalendar.css';
 import 'react-calendar/dist/Calendar.css';
 
-const decodeToken = (token) => {
-    try {
-        return JSON.parse(atob(token.split('.')[1]));
-    } catch (e) {
-        console.error('Error decoding token:', e);
-        return null;
-    }
-};
-
-const AppointmentCalendar = ({ userRole }) => {
-    const [appointments, setAppointments] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [selectedDate, setSelectedDate] = useState(new Date());
-    const [isModalOpen, setIsModalOpen] = useState(false);
-
-    useEffect(() => {
-        const fetchAppointments = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                if (!token) {
-                    setError('Not authenticated');
-                    setLoading(false);
-                    return;
-                }
-                const decodedToken = decodeToken(token);
-                const userId = decodedToken?.user?.id;
-
-                let response;
-                if (userRole === 'Admin') {
-                    response = await api.get('/appointments');
-                } else if (userId) {
-                    response = await api.get(`/clients/${userId}/appointments`);
-                } else {
-                    setError('Could not identify user.');
-                    setLoading(false);
-                    return;
-                }
-                
-                setAppointments(response.data);
-            } catch (err) {
-                setError('Failed to fetch appointments.');
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchAppointments();
-    }, [userRole]);
+const AppointmentCalendar = ({ onDateSelect, selectedDate, appointments }) => {
 
     const handleDayClick = (date) => {
-        setSelectedDate(date);
-        setIsModalOpen(true);
+        if (onDateSelect) {
+            onDateSelect(date);
+        }
     };
 
     const getAppointmentsForDate = (date) => {
@@ -86,28 +36,28 @@ const AppointmentCalendar = ({ userRole }) => {
                                {new Date(appt.appointmenttime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                            </div>
                         ))}
+                        {appointmentsForTile.length > 2 && <div className="more-appointments-indicator">...</div>}
                     </div>
                 );
             }
         }
         return null;
     };
-    
-    if (loading) return <p>Loading calendar...</p>;
-    if (error) return <p className="message">{error}</p>;
+
+    const tileClassName = ({ date, view }) => {
+        if (view === 'month' && selectedDate && date.toDateString() === selectedDate.toDateString()) {
+            return 'selected-day';
+        }
+        return null;
+    };
 
     return (
         <div className="calendar-container">
             <Calendar
                 onClickDay={handleDayClick}
                 tileContent={tileContent}
+                tileClassName={tileClassName}
                 className="full-page-calendar"
-            />
-            <AppointmentDetailsModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                date={selectedDate}
-                appointments={getAppointmentsForDate(selectedDate)}
             />
         </div>
     );
