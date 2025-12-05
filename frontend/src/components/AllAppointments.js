@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import api from '../api';
 import { FiClock, FiCheckCircle, FiCheckSquare, FiXCircle } from 'react-icons/fi';
+import {FaCheck, FaTimes } from 'react-icons/fa';
 
 const statusIcons = {
     Pending: <FiClock />,
@@ -138,10 +139,10 @@ function AllAppointments() {
                                 {appt.status === 'Pending' && (
                                     <>
                                         <button onClick={() => handleUpdateStatus(appt.appointmentid, 'Scheduled')} className="approve-button">
-                                            Approve
+                                            <FaCheck/> Approve
                                         </button>
                                         <button onClick={() => handleUpdateStatus(appt.appointmentid, 'Canceled')} className="deny-button">
-                                            Deny
+                                            <FaTimes/> Deny
                                         </button>
                                     </>
                                 )}
