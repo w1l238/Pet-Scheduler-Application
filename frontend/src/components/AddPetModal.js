@@ -16,6 +16,7 @@ function AddPetModal({ onClose, onPetAdded }) {
         Breed: '',
         Age: '',
         Notes: '',
+        ProfilePhotoURL: '',
     });
     const [message, setMessage] = useState('');
     const [showModal, setShowModal] = useState(false);
@@ -25,7 +26,7 @@ function AddPetModal({ onClose, onPetAdded }) {
         return () => clearTimeout(timer);
     }, []);
 
-    const { Name, Breed, Age, Notes } = formData;
+    const { Name, Breed, Age, Notes, ProfilePhotoURL } = formData;
 
     const onChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -92,6 +93,10 @@ function AddPetModal({ onClose, onPetAdded }) {
                         value={Notes}
                         onChange={onChange}
                     />
+                    </div>
+                    <div className="form-group">
+                        <label>Profile Photo URL</label>
+                        <input type="text" name="ProfilePhotoURL" value={ProfilePhotoURL} onChange={onChange} placeholder="Image URL (Optional)" />
                     </div>
                     <div className="modal-footer">
                         <button type="button" onClick={handleClose} className="cancel-button">Cancel</button>
