@@ -8,6 +8,7 @@ CREATE TABLE Client (
 	Email VARCHAR(100) UNIQUE NOT NULL,
 	PhoneNumber VARCHAR(20),
 	PasswordHash VARCHAR(255) NOT NULL,
+	ProfilePhotoURL TEXT,
 	CreatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 	Role VARCHAR(20) DEFAULT 'Client' NOT NULL
 );
@@ -20,6 +21,7 @@ CREATE TABLE Pet (
 	Breed VARCHAR(50),
 	Age INT,
 	Notes TEXT,
+	ProfilePhotoURL TEXT,
 	CreatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (ClientID) REFERENCES Client(ClientID) ON DELETE CASCADE
 );
@@ -42,7 +44,8 @@ CREATE TABLE Appointment (
 	AppointmentTime TIMESTAMP WITH TIME ZONE NOT NULL,
 	Status VARCHAR(20) DEFAULT 'Scheduled', -- e.g., Scheduled, Completed, Canceled
 	Notes TEXT,
-	ReminderSent BOOLEAN DEFAULT FALSE,
+    ReminderSent24h BOOLEAN DEFAULT FALSE,
+    ReminderSent1h BOOLEAN DEFAULT FALSE,
 	CreatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (ClientID) REFERENCES Client(ClientID) ON DELETE CASCADE,
 	FOREIGN KEY (PetID) REFERENCES Pet(PetID) ON DELETE CASCADE,
@@ -70,3 +73,67 @@ CREATE TABLE Notification (
     CreatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (ClientID) REFERENCES Client(ClientID) ON DELETE CASCADE
 );
+
+CREATE TABLE Settings (
+    SettingID SERIAL PRIMARY KEY,
+    Name VARCHAR(255) UNIQUE NOT NULL,
+    Value TEXT
+);
+
+-- Insert default values for the email templates
+INSERT INTO Settings (Name, Value) VALUES 
+('email_reminder_24h_subject', 'Reminder: Your upcoming appointment with Pet Scheduler'),
+('email_reminder_24h_body', 'Dear {{client_name}},
+
+This is a reminder that your pet, {{pet_name}}, has an appointment scheduled for {{appointment_date}} at {{appointment_time}}.
+
+Thank you,
+Pet Scheduler
+
+--
+{{business_name}}
+{{business_address}}
+{{business_phone}}
+{{business_email}}'),
+('email_reminder_1h_subject', 'Reminder: Your appointment is in one hour'),
+('email_reminder_1h_body', 'Dear {{client_name}},
+
+This is a reminder that your pet, {{pet_name}}, has an appointment in one hour at {{appointment_time}}.
+
+See you soon,
+Pet Scheduler
+
+--
+{{business_name}}
+{{business_address}}
+{{business_phone}}
+{{business_email}}');
+
+-- Insert default values for invoice settings
+INSERT INTO Settings (Name, Value) VALUES ('invoice_due_days', '30');
+INSERT INTO Settings (Name, Value) VALUES ('invoice_footer', 'Thank you for your business!');
+
+-- Insert default values for business profile
+INSERT INTO Settings (Name, Value) VALUES ('business_name', 'Pet Scheduler');
+INSERT INTO Settings (Name, Value) VALUES ('business_address', '123 Main St, Anytown, USA');
+INSERT INTO Settings (Name, Value) VALUES ('business_phone', '555-123-4567');
+INSERT INTO Settings (Name, Value) VALUES ('business_email', 'contact@petscheduler.com');
+
+-- Insert default values for booking and appointment rules
+INSERT INTO Settings (Name, Value) VALUES ('booking_minimum_notice_hours', '24');
+INSERT INTO Settings (Name, Value) VALUES ('cancellation_policy', 'Please provide at least 24 hours notice for any cancellations.');
+
+
+-- Insert default values for invoice paid email
+INSERT INTO Settings (Name, Value) VALUES ('invoice_paid_subject', 'Your invoice has been paid');
+INSERT INTO Settings (Name, Value) VALUES ('invoice_paid_body', 'Dear {{client_name}},
+
+This is a confirmation that your invoice for {{amount}} has been paid.
+
+Thank you for your business!
+
+--
+{{business_name}}
+{{business_address}}
+{{business_phone}}
+{{business_email}}');
