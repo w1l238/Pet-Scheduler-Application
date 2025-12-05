@@ -1,0 +1,67 @@
+/* NotFoundPage.css */
+
+.not-found-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: calc(100vh - 200px); /* Adjust based on header/footer height */
+    text-align: center;
+    padding: 2rem;
+    color: #495057;
+}
+
+.not-found-content {
+    background: #ffffff;
+    padding: 3rem 4rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    width: 100%;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeIn 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.not-found-content h1 {
+    font-size: 6rem;
+    margin: 0;
+    color: #6a11cb;
+    font-weight: 700;
+}
+
+.not-found-content h2 {
+    font-size: 1.75rem;
+    margin: 0.5rem 0 1rem 0;
+    color: #343a40;
+}
+
+.not-found-content p {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+}
+
+.not-found-link {
+    display: inline-block;
+    background: linear-gradient(to right, #6a11cb, #2575fc);
+    color: white;
+    padding: 0.8rem 2rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    text-decoration: none;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+}
+
+.not-found-link:hover {
+    opacity: 0.9;
+}
