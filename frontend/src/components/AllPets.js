@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../api';
 
 function AllPets() {
@@ -96,19 +97,20 @@ function AllPets() {
             ) : (
                 <ul className="dashboard-list">
                     {filteredAndSortedPets.map(pet => (
-                        <li key={pet.petid} className="dashboard-list-item">
-                            <div className="item-details">
-                                <strong>Name:</strong> {pet.name} <br />
-                                <strong>Breed:</strong> {pet.breed || 'N/A'} <br />
-                                <strong>Age:</strong> {pet.age || 'N/A'} <br />
-                                <strong>Client:</strong> {pet.firstname} {pet.lastname}
-                            </div>
-                            <div className="item-actions">
-                                <button onClick={() => handleDeletePet(pet.petid)} className="delete-button">
-                                    Delete
-                                </button>
-                            </div>
-                        </li>
+                        <Link to={`/pet/${pet.petid}`}>
+                            <li key={pet.petid} className="dashboard-list-item">
+                                <img src={pet.profilephotourl || 'https://via.placeholder.com/50'} alt={`${pet.name}'s profile`} className="item-photo" />
+                                    <div className="item-details">
+                                        <strong>{pet.name}</strong> ({pet.breed || 'N/A'}) - {pet.age ? `${pet.age} years old` : 'Age not specified'}
+                                        <p>Owner: {pet.firstname} {pet.lastname}</p>
+                                    </div>
+                                <div className="item-actions">
+                                    <button onClick={() => handleDeletePet(pet.petid)} className="delete-button">
+                                        Delete
+                                    </button>
+                                </div>
+                            </li>
+                        </Link>   
                     ))}
                 </ul>
             )}
