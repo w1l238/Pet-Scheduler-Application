@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {MdOutlineReceiptLong, MdOutlinePeople, MdOutlinePets, MdOutlineMiscellaneousServices } from 'react-icons/md';
 import { FaRegCalendarAlt, FaRegClock } from 'react-icons/fa';
-import { FiMenu } from 'react-icons/fi';
+import { FiMenu, FiSettings } from 'react-icons/fi';
 import './AdminSidebar.css';
 
 function AdminSidebar({ isCollapsed, toggleSidebar }) {
@@ -15,7 +15,7 @@ function AdminSidebar({ isCollapsed, toggleSidebar }) {
             </div>
             <ul className="admin-sidebar-nav-menu">
                 <li className="admin-sidebar-nav-item">
-                    <NavLink to="/admin/dashboard" className="admin-sidebar-nav-links" end>
+                    <NavLink to="/admin/calendar" className="admin-sidebar-nav-links" end>
                         <FaRegCalendarAlt />
                         <span>Calendar</span>
                     </NavLink>
@@ -48,6 +48,12 @@ function AdminSidebar({ isCollapsed, toggleSidebar }) {
                     <NavLink to="/admin/services" className="admin-sidebar-nav-links">
                         <MdOutlineMiscellaneousServices />
                         <span>Services</span>
+                    </NavLink>
+                </li>
+                <li className="admin-sidebar-nav-item">
+                    <NavLink to="/admin/settings" className="admin-sidebar-nav-links">
+                        <FiSettings />
+                        <span>Settings</span>
                     </NavLink>
                 </li>
             </ul>
