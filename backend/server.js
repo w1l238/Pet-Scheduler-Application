@@ -30,7 +30,7 @@ app.use('/api/auth', authRoutes);
 // GET all clients (ADMIN ONLY)
 app.get('/api/clients', authenticateToken, authorizeRoles(['Admin']),  async (req, res) => {
 	try {
-		const { rows } = await pool.query('SELECT ClientID, FirstName, LastName, Email, PhoneNumber, Role, CreatedAt FROM Client');
+		const { rows } = await pool.query('SELECT ClientID, FirstName, LastName, Email, PhoneNumber, Role, CreatedAt, ProfilePhotoURL FROM Client');
 		res.json(rows);
 	} catch (err) {
 		console.error(err.message);
@@ -46,7 +46,7 @@ app.get('/api/clients/:id', authenticateToken, async (req, res) => {
 		if (req.user.role !== 'Admin' && req.user.id !== parseInt(id, 10)) {
 			return res.status(403).json({ message: 'Access denied' });
 		}
-		const { rows } = await pool.query('SELECT ClientID, FirstName, LastName, Email, PhoneNumber, Role, CreatedAt FROM Client WHERE ClientID = $1', [id]);
+		const { rows } = await pool.query('SELECT ClientID, FirstName, LastName, Email, PhoneNumber, Role, CreatedAt, ProfilePhotoURL FROM Client WHERE ClientID = $1', [id]);
 		if (rows.length === 0) {
 			return res.status(404).json({ message: 'Client not found' });
 		}
@@ -58,13 +58,23 @@ app.get('/api/clients/:id', authenticateToken, async (req, res) => {
 });
 
 // PUT (update) a client by ID
-app.put('/api/clients/:id', authenticateToken, authorizeRoles(['Admin']), async (req, res) => {
+app.put('/api/clients/:id', authenticateToken, async (req, res) => {
 	try {
 		const { id } = req.params;
 		const updates = req.body;
 
-        // Prevent admin from changing their own role
-        if (req.user.id === parseInt(id, 10) && updates.Role && updates.Role !== 'Admin') {
+        // Authorization: Allow admin or the user themselves
+        if (req.user.role !== 'Admin' && req.user.id !== parseInt(id, 10)) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        // Prevent non-admins from changing roles
+        if (req.user.role !== 'Admin') {
+            delete updates.Role;
+        }
+
+        // Prevent admin from changing their own role to non-admin
+        if (req.user.role === 'Admin' && req.user.id === parseInt(id, 10) && updates.Role && updates.Role !== 'Admin') {
             return res.status(400).json({ message: 'Admins cannot change their own role.' });
         }
 
@@ -77,13 +87,14 @@ app.put('/api/clients/:id', authenticateToken, authorizeRoles(['Admin']), async 
 
 		// Merge updates with current data
         const newClientData = { ...currentClient, ...updates };
-		// Sanitize to only include columns that exist in the table
-		const { FirstName, LastName, Email, PhoneNumber, Role } = newClientData;
+		// Sanitize and handle casing
+		const { FirstName, LastName, Email, PhoneNumber, ProfilePhotoURL } = newClientData;
+        const Role = newClientData.Role || newClientData.role; // Handle case difference
 
 
 		const { rows } = await pool.query(
-			'UPDATE Client SET FirstName = $1, LastName = $2, Email = $3, PhoneNumber = $4, Role = $5 WHERE ClientID = $6 RETURNING ClientID, FirstName, LastName, Email, PhoneNumber, Role',
-			[FirstName, LastName, Email, PhoneNumber, Role, id]
+			'UPDATE Client SET FirstName = $1, LastName = $2, Email = $3, PhoneNumber = $4, Role = $5, ProfilePhotoURL = $6 WHERE ClientID = $7 RETURNING ClientID, FirstName, LastName, Email, PhoneNumber, Role, ProfilePhotoURL',
+			[FirstName, LastName, Email, PhoneNumber, Role, ProfilePhotoURL, id]
 		);
 		
 		res.json(rows[0]);
@@ -164,14 +175,14 @@ app.get('/api/clients/:clientId/pets', authenticateToken, async (req, res) => {
 app.post('/api/pets', authenticateToken, async (req, res) => {
 	try {
 		console.log('Received pet data:', req.body);
-		const { ClientID, Name, Breed, Age, Notes } = req.body;
+		const { ClientID, Name, Breed, Age, Notes, ProfilePhotoURL } = req.body;
 		// Ensure users can only add pets to their own profile
 		if (req.user.id !== ClientID) {
 			return res.status(403).json({ message: 'Access denied: You can only add pets to your own profile.' });
 		}
 		const { rows } = await pool.query (
-			'INSERT INTO Pet (ClientID, Name, Breed, Age, Notes) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-			[ClientID, Name, Breed, Age, Notes]
+			'INSERT INTO Pet (ClientID, Name, Breed, Age, Notes, ProfilePhotoURL) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+			[ClientID, Name, Breed, Age, Notes, ProfilePhotoURL]
 		);
 		res.status(201).json(rows[0]);
 	} catch (err) {
@@ -184,7 +195,7 @@ app.post('/api/pets', authenticateToken, async (req, res) => {
 app.put('/api/pets/:id', authenticateToken, async (req, res) => {
 	try {
 		const { id } = req.params;
-		const { ClientID, Name, Breed, Age, Notes } = req.body;
+		const { ClientID, Name, Breed, Age, Notes, ProfilePhotoURL } = req.body;
 
 		// Get the pet to check ownership
 		const petResult = await pool.query('SELECT ClientID FROM Pet WHERE PetID = $1', [id]);
@@ -196,8 +207,8 @@ app.put('/api/pets/:id', authenticateToken, async (req, res) => {
 		}
 
 		const { rows } = await pool.query(
-			'UPDATE Pet SET ClientID = $1, Name = $2, Breed = $3, Age = $4, Notes = $5 WHERE PetID = $6 RETURNING *',
-			[ClientID, Name, Breed, Age, Notes, id]
+			'UPDATE Pet SET ClientID = $1, Name = $2, Breed = $3, Age = $4, Notes = $5, ProfilePhotoURL = $6 WHERE PetID = $7 RETURNING *',
+			[ClientID, Name, Breed, Age, Notes, ProfilePhotoURL, id]
 		);
 		res.json(rows[0]);
 	} catch (err) {
@@ -319,6 +330,20 @@ app.post('/api/appointments', authenticateToken, async (req, res) => {
 			return res.status(403).json({ message: 'Access denied: You can only create appointments for yourself.' });
 		}
 
+		// Enforce minimum booking notice for non-admins
+		if (req.user.role !== 'Admin') {
+			const settingsRes = await pool.query('SELECT Value FROM Settings WHERE Name = $1', ['booking_minimum_notice_hours']);
+			const minNoticeHours = settingsRes.rows.length > 0 ? parseInt(settingsRes.rows[0].value, 10) : 24; // Default to 24 if not set
+
+			const now = new Date();
+			const appointmentTime = new Date(AppointmentTime);
+			const noticeMilliseconds = minNoticeHours * 60 * 60 * 1000;
+
+			if (appointmentTime.getTime() - now.getTime() < noticeMilliseconds) {
+				return res.status(400).json({ message: `Booking failed: Appointments must be made at least ${minNoticeHours} hours in advance.` });
+			}
+		}
+
 		const { rows } = await pool.query(
 			'INSERT INTO Appointment (ClientID, PetID, ServiceID, AppointmentTime, Status, Notes) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
 			[ClientID, PetID, ServiceID, AppointmentTime, Status, Notes]
@@ -377,16 +402,15 @@ app.put('/api/appointments/:id', authenticateToken, async (req, res) => {
 				// Check if an invoice for this appointment already exists to prevent dupes
 				const invoiceExists = await pool.query('SELECT 1 FROM Invoice WHERE AppointmentID = $1', [id]);
 
-				if (invoiceExists.rows.length === 0) {				
-					const queryText = 'INSERT INTO Invoice (AppointmentID, Amount, Status, DueDate) VALUES ($1, $2, $3, NOW() + INTERVAL \'30 days\')';
+				if (invoiceExists.rows.length === 0) {
+					// Fetch invoice_due_days setting
+					const settingsRes = await pool.query('SELECT Value FROM Settings WHERE Name = $1', ['invoice_due_days']);
+					const dueDays = settingsRes.rows.length > 0 ? settingsRes.rows[0].value : '30'; // Default to 30 if not set
+
+					const queryText = `INSERT INTO Invoice (AppointmentID, Amount, Status, DueDate) VALUES ($1, $2, $3, NOW() + INTERVAL '${dueDays} days')`;
 					const queryParams = [appointmentId, price, 'Unpaid'];
 
-					// console.log('--- DEBUG INVOICE CREATION ---');
-					// console.log('Query:', queryText);
-					// console.log('Params:', queryParams);
-					// console.log('------------------------------');
-
-					// Create the invoice with a due date 30 days from now
+					// Create the invoice
 					await pool.query(queryText, queryParams);
 				}
 			}
@@ -597,6 +621,11 @@ app.put('/api/invoices/:id', authenticateToken, authorizeRoles(['Admin']), async
 		const { id } = req.params;
 		// Use lowercase keys to match the frontend data
 		const { appointmentid, amount, status, duedate } = req.body;
+
+		// Get the old status to check if it's changing to 'Paid'
+		const oldInvoice = await pool.query('SELECT Status FROM Invoice WHERE InvoiceID = $1', [id]);
+		const oldStatus = oldInvoice.rows.length > 0 ? oldInvoice.rows[0].status : null;
+
 		const { rows } = await pool.query(
 			'UPDATE Invoice SET AppointmentID = $1, Amount = $2, Status = $3, DueDate = $4 WHERE InvoiceID = $5 RETURNING *',
 			[appointmentid, amount, status, duedate, id]
@@ -604,6 +633,46 @@ app.put('/api/invoices/:id', authenticateToken, authorizeRoles(['Admin']), async
 		if (rows.length === 0) {
 			return res.status(404).json({ message: 'Invoice not found' });
 		}
+
+		// If status changed to 'Paid', send a confirmation email
+		if (status === 'Paid' && oldStatus !== 'Paid') {
+			// 1. Fetch client info
+			const clientInfo = await pool.query(
+				`SELECT c.Email, c.FirstName 
+				 FROM Client c
+				 JOIN Appointment a ON c.ClientID = a.ClientID
+				 WHERE a.AppointmentID = $1`,
+				[appointmentid]
+			);
+
+			if (clientInfo.rows.length > 0) {
+				const { email, firstname } = clientInfo.rows[0];
+
+				// 2. Fetch email templates
+				const settingsResult = await pool.query('SELECT Name, Value FROM Settings');
+				const settings = settingsResult.rows.reduce((acc, row) => {
+					acc[row.name] = row.value;
+					return acc;
+				}, {});
+				const { invoice_paid_subject, invoice_paid_body, business_name, business_address, business_phone, business_email } = settings;
+
+				// 3. Send email
+				if (invoice_paid_subject && invoice_paid_body) {
+					const subject = invoice_paid_subject;
+					const textBody = invoice_paid_body
+						.replace(/{{client_name}}/g, firstname)
+						.replace(/{{amount}}/g, amount)
+						.replace(/{{business_name}}/g, business_name)
+						.replace(/{{business_address}}/g, business_address)
+						.replace(/{{business_phone}}/g, business_phone)
+						.replace(/{{business_email}}/g, business_email);
+					const htmlBody = textBody.replace(/\n/g, '<br>');
+
+					await sendEmail(email, subject, textBody, htmlBody);
+				}
+			}
+		}
+
 		res.json(rows[0]);
 	} catch (err) {
 		console.error(err.message);
@@ -624,6 +693,50 @@ app.delete('/api/invoices/:id', authenticateToken, authorizeRoles(['Admin']), as
 		console.error(err.message);
 		res.status(500).send('Server error');
 	}
+});
+
+
+// --- Settings API Endpoints --- (ADMIN ONLY)
+
+// GET all settings
+app.get('/api/settings', authenticateToken, authorizeRoles(['Admin']), async (req, res) => {
+    try {
+        const { rows } = await pool.query('SELECT Name, Value FROM Settings');
+        // Convert array to a map for easier use on the frontend
+        const settingsMap = rows.reduce((acc, row) => {
+            acc[row.name] = row.value;
+            return acc;
+        }, {});
+        res.json(settingsMap);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
+// PUT (update) settings
+app.put('/api/settings', authenticateToken, authorizeRoles(['Admin']), async (req, res) => {
+    try {
+        const settings = req.body; // Expects an object like { settingName: settingValue, ... }
+        
+        // Use a transaction to ensure all or no settings are updated
+        await pool.query('BEGIN');
+
+        for (const [name, value] of Object.entries(settings)) {
+            await pool.query(
+                'INSERT INTO Settings (Name, Value) VALUES ($1, $2) ON CONFLICT (Name) DO UPDATE SET Value = $2',
+                [name, value]
+            );
+        }
+
+        await pool.query('COMMIT');
+        
+        res.json({ message: 'Settings updated successfully' });
+    } catch (err) {
+        await pool.query('ROLLBACK');
+        console.error('Error updating settings:', err.message);
+        res.status(500).send('Server error');
+    }
 });
 
 
@@ -661,46 +774,93 @@ app.put('/api/notifications/read-all', authenticateToken, authorizeRoles(['Clien
 
 
 // --- Reminder API Endpoint ---
-app.post('/api/reminders/send', authenticateToken, authorizeRoles(['Admin']), async (req, res) => {
+app.post('/api/reminders/send', async (req, res) => {
+	// Secure the endpoint with a secret key
+	const cronSecret = req.headers['x-cron-secret'];
+	if (cronSecret !== process.env.CRON_SECRET) {
+		return res.status(401).json({ message: 'Unauthorized: Invalid secret.'});
+	}
+
 	try {
-		// Find appointments in the next 24 hours that haven't been sent a reminder yet
-		const upcomingAppointments = await pool.query(
-		   `SELECT a.AppointmentID, a.AppointmentTime, c.Email, c.FirstName, p.Name as PetName
-			FROM APPOINTMENT AS a
-			JOIN CLIENT AS c ON a.ClientID = c.ClientID
-			JOIN PET AS p ON a.PetID = p.PetID
-			WHERE a.AppointmentTime BETWEEN NOW() AND NOW() + INTERVAL '24 hours'
-			AND a.ReminderSent`
+		// 1. Fetch all email templates from settings
+        const settingsResult = await pool.query('SELECT Name, Value FROM Settings');
+        const settings = settingsResult.rows.reduce((acc, row) => {
+            acc[row.name] = row.value;
+            return acc;
+        }, {});
+
+        const { 
+            email_reminder_24h_subject, email_reminder_24h_body,
+            email_reminder_1h_subject, email_reminder_1h_body,
+            business_name, business_address, business_phone, business_email
+        } = settings;
+
+		// --- 24-Hour Reminders ---
+		const twentyFourHourReminders = await pool.query(
+			`SELECT a.AppointmentID, a.AppointmentTime, c.Email, c.FirstName, p.Name as PetName
+			 FROM Appointment AS a
+			 JOIN Client AS c ON a.ClientID = c.ClientID
+			 JOIN Pet AS p ON a.PetID = p.PetID
+			 WHERE a.AppointmentTime > NOW() AND a.AppointmentTime <= NOW() + INTERVAL '24 hours'
+			 AND a.ReminderSent24h = FALSE`
 		);
 
-		if (upcomingAppointments.rows.length === 0) {
-			return res.json({ message: 'No upcoming appointments to send reminders for.' });
+		for (const appt of twentyFourHourReminders.rows) {
+			// 2. Replace placeholders
+            const subject = email_reminder_24h_subject.replace('{{client_name}}', appt.firstname).replace('{{pet_name}}', appt.petname);
+            const textBody = email_reminder_24h_body
+                .replace(/{{client_name}}/g, appt.firstname)
+                .replace(/{{pet_name}}/g, appt.petname)
+                .replace(/{{appointment_date}}/g, new Date(appt.appointmenttime).toLocaleDateString())
+                .replace(/{{appointment_time}}/g, new Date(appt.appointmenttime).toLocaleTimeString())
+                .replace(/{{business_name}}/g, business_name)
+                .replace(/{{business_address}}/g, business_address)
+                .replace(/{{business_phone}}/g, business_phone)
+                .replace(/{{business_email}}/g, business_email);
+			
+			const htmlBody = textBody.replace(/\n/g, '<br>');
+
+			await sendEmail(appt.email, subject, textBody, htmlBody);
+			await pool.query('UPDATE Appointment SET ReminderSent24h = TRUE WHERE AppointmentID = $1', [appt.appointmentid]);
 		}
 
-		let remindersSentCount = 0;
-		// Loop through appointments and send email
-		for (const appt of upcomingAppointments.rows) {
-			const subject = 'Appointment Reminder';
-			const text = `Hi ${appt.firstname},\n\nThis is a reminder for your upcoming appointment for 
-			${appt.petname} tomorrow at ${new Date(appt.appointmenttime).toLocaleTimeString()}.\n\nSee you soon!`;
-			const html = `<p>Hi ${appt.firstname},</p><p>This is a reminder for your upcoming appointment for
-			<strong>${appt.petname}</strong> tomorrow at <strong>${new Date(appt.appointmenttime).toLocaleTimeString()}
-			</strong>.</p><p>See you soon!</p>`;
+		// --- 1-Hour Reminders ---
+		const oneHourReminders = await pool.query(
+			`SELECT a.AppointmentID, a.AppointmentTime, c.Email, c.FirstName, p.Name as PetName
+			 FROM Appointment AS a
+			 JOIN Client AS c ON a.ClientID = c.ClientID
+			 JOIN Pet AS p ON a.PetID = p.PetID
+			 WHERE a.AppointmentTime BETWEEN NOW() + INTERVAL '55 minutes' AND NOW() + INTERVAL '65 minutes'
+			 AND a.ReminderSent1h = FALSE`
+		);
 
-			await sendEmail(appt.email, subject, text, html);
+		for (const appt of oneHourReminders.rows) {
+			// 2. Replace placeholders
+            const subject = email_reminder_1h_subject.replace('{{client_name}}', appt.firstname).replace('{{pet_name}}', appt.petname);
+            const textBody = email_reminder_1h_body
+                .replace(/{{client_name}}/g, appt.firstname)
+                .replace(/{{pet_name}}/g, appt.petname)
+                .replace(/{{appointment_time}}/g, new Date(appt.appointmenttime).toLocaleTimeString())
+                .replace(/{{business_name}}/g, business_name)
+                .replace(/{{business_address}}/g, business_address)
+                .replace(/{{business_phone}}/g, business_phone)
+                .replace(/{{business_email}}/g, business_email);
 
-			// Mark the reminder as sent in the database
-			await pool.query(
-				'UPDATE Appointment SET ReminderSent = TRUE WHERE AppointmentID = $1',
-				[appt.appointmentid]
-			);
-			remindersSentCount++;
+			const htmlBody = textBody.replace(/\n/g, '<br>');
+
+			await sendEmail(appt.email, subject, textBody, htmlBody);
+			await pool.query('UPDATE Appointment SET ReminderSent1h = TRUE WHERE AppointmentID = $1', [appt.appointmentid]);
 		}
 
-		res.json({ message: `${remindersSentCount} reminder(s) sent successfully.` });
+		res.json({ 
+			message: 'Reminder check completed.',
+			sent24h: twentyFourHourReminders.rowCount,
+			sent1h: oneHourReminders.rowCount
+		});
+
 	} catch (err) {
-		console.error(err.message);
-		res.status(500).send('Server error');
+		console.error('Error running reminder job:', err.message);
+		res.status(500).send('Server error during reminder job.');
 	}
 });
 
