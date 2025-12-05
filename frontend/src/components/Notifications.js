@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaBell } from 'react-icons/fa';
+import { FaBell, FaCheck, FaTimes } from 'react-icons/fa';
 import api from '../api';
 import './Notifications.css';
 
@@ -66,22 +66,21 @@ function Notifications() {
                     {notifications.length > 0 ? (
                         notifications.map(apt => (
                             <div key={apt.appointmentid} className="notification-item">
-                                <p>
-                                    <strong>{apt.firstname} {apt.lastname}</strong> requested an appointment for <strong>{apt.petname}</strong>.
-                                </p>
-                                <p>
-                                    DateTime: {new Date(apt.appointmenttime).toLocaleString()}
-                                </p>
+                                <div className="notification-details">
+                                    <p><strong>Client:</strong> {apt.firstname} {apt.lastname}</p>
+                                    <p><strong>Pet:</strong> {apt.petname}</p>
+                                    <p><strong>When:</strong> {new Date(apt.appointmenttime).toLocaleString()}</p>
+                                </div>
                                 <div className="notification-actions">
                                     <button 
                                         onClick={() => handleUpdateStatus(apt.appointmentid, 'Scheduled')}
                                         className="approve-button">
-                                        Approve
+                                        <FaCheck /> Approve
                                     </button>
                                     <button 
                                         onClick={() => handleUpdateStatus(apt.appointmentid, 'Canceled')}
                                         className="deny-button">
-                                        Deny
+                                        <FaTimes /> Deny
                                     </button>
                                 </div>
                             </div>
