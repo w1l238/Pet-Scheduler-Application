@@ -1,0 +1,126 @@
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0; /* Start invisible */
+    transition: opacity 0.3s ease; /* Animate opacity */
+}
+
+.modal-overlay.show {
+    opacity: 1; /* Fade in */
+}
+
+.modal-content.admin-profile-modal {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 1rem;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    transform: translateY(-50px); /* Start above the screen */
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease; /* Animate transform and opacity */
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-overlay.show .modal-content.admin-profile-modal {
+    transform: translateY(0); /* Move to final position */
+    opacity: 1;
+}
+
+.admin-profile-modal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.admin-profile-modal .modal-header h2 {
+    margin: 0;
+    color: #6a11cb;
+}
+
+.admin-profile-modal .close-button {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    cursor: pointer;
+    color: #aaa;
+    line-height: 1;
+}
+
+.admin-profile-modal .close-button:hover {
+    color: #333;
+}
+
+.admin-profile-modal .modal-body {
+    /* No specific styles needed here if form groups handle spacing */
+}
+
+.admin-profile-modal .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    border-top: 1px solid #eee;
+    padding-top: 1rem;
+}
+
+.admin-profile-modal .button-primary, .admin-profile-modal .button-secondary {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+}
+
+.admin-profile-modal .button-secondary {
+    background: #eee;
+    color: #333;
+}
+
+.admin-profile-modal .button-secondary:hover {
+    background: #ddd;
+}
+
+.admin-profile-modal .button-primary {
+    background: linear-gradient(to right, #6a11cb, #2575fc);
+    color: white;
+}
+
+.admin-profile-modal .button-primary:hover {
+    opacity: 0.9;
+}
+
+.admin-profile-modal .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.admin-profile-modal .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    color: #555;
+}
+
+.admin-profile-modal .form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 0.75rem;
+    font-family: inherit;
+    font-size: 1rem;
+    box-sizing: border-box;
+}
