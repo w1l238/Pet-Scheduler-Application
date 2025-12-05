@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../api';
 import EditPetModal from './EditPetModal';
 
@@ -133,8 +134,9 @@ function PetManager({ version, onPetDeleted }) {
                 <ul className="dashboard-list">
                     {filteredAndSortedPets.map(pet => (
                         <li key={pet.petid} className="dashboard-list-item">
+                            <img src={pet.profilephotourl || 'https://via.placeholder.com/50'} alt={`${pet.name}'s profile`} className="item-photo" />
                             <div className="item-details">
-                                <strong>{pet.name}</strong> ({pet.breed || 'N/A'}) - {pet.age ? `${pet.age} years old` : 'Age not specified'}
+                                <Link to={`/pet/${pet.petid}`}><strong>{pet.name}</strong></Link> ({pet.breed || 'N/A'}) - {pet.age ? `${pet.age} years old` : 'Age not specified'}
                                 {pet.notes && <p>Notes: {pet.notes}</p>}
                             </div>
                             <div className="item-actions">
