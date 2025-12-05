@@ -5,9 +5,8 @@
 
 .full-page-calendar {
     width: 100% !important;
-    height: 100% !important;
     border: none !important;
-    border-radius: 8px;
+    border-radius: 1rem;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 }
 
@@ -18,13 +17,34 @@
     align-items: flex-start;
     padding: 5px;
     transition: background-color 0.3s ease, transform 0.3s ease; /* Add transition for animation */
+    border: 2px solid transparent; /* Add transparent border */
 }
 
 .full-page-calendar .react-calendar__tile:hover {
-    background-color: #e6e6e6; /* Lighter background on hover */
+    background-color: #f0e9ff; /* Lighter purple background on hover */
     transform: translateY(-2px); /* Slight lift effect */
     cursor: pointer;
+    border-radius: 0.75rem;
 }
+
+.full-page-calendar .react-calendar__tile--now {
+    background: linear-gradient(to right, #6a11cb, #2575fc);
+    border-radius: 0.75rem;
+    opacity: 0.7;
+}
+
+.full-page-calendar .react-calendar__tile--now:enabled:hover {
+    background: linear-gradient(to right, #6a11cb, #2575fc);
+    opacity: 0.9;
+}
+
+/* Style for the selected day */
+.full-page-calendar .selected-day {
+    background: #dcd4e8 !important;
+    border: 2px solid #6a11cb !important;
+    border-radius: 0.75rem;
+}
+
 
 .appointment-list-container {
     margin-top: 5px;
@@ -32,7 +52,7 @@
 }
 
 .appointment-info {
-    font-size: 0.75rem;
+    font-size: 0.8rem; /* Slightly larger font */
     padding: 2px 4px;
     border-radius: 4px;
     margin-bottom: 3px;
@@ -40,7 +60,21 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    animation: fadeIn 0.3s ease-in-out;
 }
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.more-appointments-indicator {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #666;
+    text-align: left;
+}
+
 
 /* Status-specific colors */
 .status-scheduled {
