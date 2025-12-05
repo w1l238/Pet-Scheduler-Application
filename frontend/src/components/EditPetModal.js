@@ -8,6 +8,7 @@ function EditPetModal({ pet, onClose, onPetUpdated }) {
         Breed: '',
         Age: '',
         Notes: '',
+        ProfilePhotoURL: '',
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -25,6 +26,7 @@ function EditPetModal({ pet, onClose, onPetUpdated }) {
                 Breed: pet.breed || '',
                 Age: pet.age || '',
                 Notes: pet.notes || '',
+                ProfilePhotoURL: pet.profilephotourl || '',
             });
         }
     }, [pet]);
@@ -103,6 +105,15 @@ function EditPetModal({ pet, onClose, onPetUpdated }) {
                         <textarea
                             name="Notes"
                             value={formData.Notes}
+                            onChange={handleChange}
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>Profile Photo URL</label>
+                        <input
+                            type="text"
+                            name="ProfilePhotoURL"
+                            value={formData.ProfilePhotoURL}
                             onChange={handleChange}
                         />
                     </div>
