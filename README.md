@@ -21,3 +21,12 @@ For 'Local Storage' error in the frontend change:
 To
     
     "start": "NODE_OPTIONS='--localstorage-file=~/.local/tmp/Pet-Scheduler-App/localstorage.json' react-scripts start",
+
+### Setup
+
+#### Email Automated Reminders via Cron Job
+    
+    crontab -e
+    */5 * * * * curl -X POST http://localhost:5000/api/reminders/send -H "x-cron-secret: your_super_secret_string_from_env_file_here" >/dev/null 2>&1
+
+This will curl the api/reminders/send address every 5 minutes to automate the reminders.
