@@ -1,0 +1,79 @@
+import React, { useState, useEffect, useCallback } from "react";
+import api from '../api';
+import AppointmentCalendar from "../components/AppointmentCalendar";
+import AppointmentListPane from "../components/AppointmentListPane";
+import './Dashboard.css';
+
+function AdminCalendarPage() {
+    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [allAppointments, setAllAppointments] = useState([]);
+    const [appointmentsForDate, setAppointmentsForDate] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchAppointments = async () => {
+            try {
+                const response = await api.get('/appointments');
+                const appointments = response.data;
+                setAllAppointments(appointments);
+
+                // Set initial appointments for today
+                const todayAppointments = appointments.filter(appt => 
+                    new Date(appt.appointmenttime).toDateString() === new Date().toDateString()
+                );
+                setAppointmentsForDate(todayAppointments);
+
+            } catch (err) {
+                console.error("Failed to fetch appointments", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchAppointments();
+    }, []);
+
+    const handleDateSelect = useCallback((date) => {
+        setSelectedDate(date);
+        const appointmentsForSelectedDate = allAppointments.filter(appt => 
+            new Date(appt.appointmenttime).toDateString() === date.toDateString()
+        );
+        setAppointmentsForDate(appointmentsForSelectedDate);
+    }, [allAppointments]);
+
+    if (loading) {
+        return (
+            <div className="calendar-page-container">
+                <header className="dashboard-header">
+                    <h1>Calendar</h1>
+                </header>
+                <div>Loading...</div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="calendar-page-container">
+            <header className="dashboard-header">
+                <h1>Calendar</h1>
+            </header>
+            <div className="calendar-page-layout">
+                <div className="calendar-main-content">
+                    <AppointmentCalendar 
+                        userRole="Admin" 
+                        onDateSelect={handleDateSelect}
+                        selectedDate={selectedDate}
+                        appointments={allAppointments}
+                    />
+                </div>
+                <div className="calendar-sidebar">
+                    <AppointmentListPane 
+                        date={selectedDate}
+                        appointments={appointmentsForDate}
+                    />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export default AdminCalendarPage;
