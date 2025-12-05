@@ -15,7 +15,7 @@ function ClientSidebar({ isCollapsed, toggleSidebar }) {
             </div>
             <ul className="client-sidebar-nav-menu">
                 <li className="client-sidebar-nav-item">
-                    <NavLink to="/client/dashboard" className="client-sidebar-nav-links" end>
+                    <NavLink to="/client/calendar" className="client-sidebar-nav-links" end>
                         <FaRegCalendarAlt />
                         <span>Calendar</span>
                     </NavLink>
