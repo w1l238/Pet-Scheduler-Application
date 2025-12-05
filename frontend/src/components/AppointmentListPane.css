@@ -1,0 +1,103 @@
+.appointment-list-pane {
+    background-color: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    /* height: calc(100vh - 235px - 4rem); Used to align bottom of container with bottom of calendar */
+    display: flex;
+    flex-direction: column;
+}
+
+.pane-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.pane-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #6a11cb;
+}
+
+.pane-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.empty-message {
+    text-align: center;
+    color: #888;
+    font-size: 1.1rem;
+    margin-top: 2rem;
+}
+
+.appointment-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.appointment-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    /* border-radius: 6px; */
+    border-radius: 0.75rem;
+    margin-bottom: 1rem;
+    border-left: 5px solid;
+}
+
+.appointment-time {
+    font-weight: bold;
+    color: #333;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.appointment-time strong {
+    font-size: 1.1rem;
+}
+
+.appointment-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    flex-grow: 1;
+}
+
+.appointment-details .status-line {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.appointment-details .client-info {
+    font-size: 1rem;
+    color: #555;
+}
+
+.appointment-details .notes {
+    font-size: 0.85rem;
+    color: #777;
+    margin: 0.5rem 0 0 0;
+    font-style: italic;
+}
+
+/* Reuse status colors from Dashboard.css */
+.status-bg-pending {
+    background-color: #fff3cd;
+    border-left-color: #ffc107;
+}
+.status-bg-scheduled {
+    background-color: #d4edda;
+    border-left-color: #28a745;
+}
+.status-bg-completed {
+    background-color: #e2e6ea;
+    border-left-color: #6c757d;
+}
+.status-bg-canceled {
+    background-color: #f8d7da;
+    border-left-color: #dc3545;
+}
