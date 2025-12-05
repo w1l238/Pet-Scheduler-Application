@@ -1,0 +1,44 @@
+.settings-container {
+    width: 90%;
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.settings-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    color: #333;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 1rem;
+}
+
+.settings-section h2 {
+    font-size: 1.5rem;
+    color: #6a11cb;
+    margin-bottom: 1.5rem;
+}
+
+.settings-links {
+    list-style: none;
+    padding: 0;
+}
+
+.settings-links li {
+    margin-bottom: 1rem;
+}
+
+.settings-links a {
+    text-decoration: none;
+    color: #007bff;
+    font-size: 1.1rem;
+    transition: color 0.3s ease;
+}
+
+.settings-links a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
