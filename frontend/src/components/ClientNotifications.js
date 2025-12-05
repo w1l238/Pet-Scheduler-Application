@@ -70,18 +70,46 @@ function ClientNotifications() {
                     </div>
                     {error && <p className="message">{error}</p>}
                     {notifications.length > 0 ? (
-                        notifications.map(notif => (
-                            <div 
-                                key={notif.notificationid} 
-                                className="client-notification-item"
-                                onClick={() => handleNotificationClick(notif)}
-                            >
-                                <p>{notif.message}</p>
-                                <p className="notification-timestamp">
-                                    {new Date(notif.createdat).toLocaleString()}
-                                </p>
-                            </div>
-                        ))
+                        notifications.map(notif => {
+                            const parts = /Your appointment for (.*) at (.*) has been updated to "(.*)"\./.exec(notif.message);
+                            
+                            if (parts) {
+                                const [, petName, dateTime, status] = parts;
+                                const date = new Date(dateTime);
+                                return (
+                                    <div 
+                                        key={notif.notificationid} 
+                                        className="client-notification-item"
+                                        onClick={() => handleNotificationClick(notif)}
+                                    >
+                                        <div className="notification-title">Appointment Update</div>
+                                        <div className="notification-details">
+                                            <p><strong>Pet:</strong> {petName}</p>
+                                            <p><strong>Date:</strong> {date.toLocaleDateString()}</p>
+                                            <p><strong>Time:</strong> {date.toLocaleTimeString()}</p>
+                                            <p><strong>New Status:</strong> <span className={`status-badge status-${status.toLowerCase()}`}>{status}</span></p>
+                                        </div>
+                                        <p className="notification-timestamp">
+                                            {new Date(notif.createdat).toLocaleString()}
+                                        </p>
+                                    </div>
+                                );
+                            }
+
+                            // Fallback for other notifications
+                            return (
+                                <div 
+                                    key={notif.notificationid} 
+                                    className="client-notification-item"
+                                    onClick={() => handleNotificationClick(notif)}
+                                >
+                                    <p>{notif.message}</p>
+                                    <p className="notification-timestamp">
+                                        {new Date(notif.createdat).toLocaleString()}
+                                    </p>
+                                </div>
+                            );
+                        })
                     ) : (
                         <div className="no-client-notifications">
                             No new notifications.
