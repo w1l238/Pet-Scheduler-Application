@@ -10,8 +10,8 @@ import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import AdminDashboard from './pages/AdminDashboard';
-import ClientDashboard from './pages/ClientDashboard';
+import AdminCalendarPage from './pages/AdminCalendarPage';
+import ClientCalendarPage from './pages/ClientCalendarPage';
 import NotFoundPage from './pages/NotFoundPage';
 import AllAppointmentsPage from './pages/AllAppointmentsPage';
 import AllInvoicesPage from './pages/AllInvoicesPage';
@@ -23,6 +23,10 @@ import AdminLayout from './pages/AdminLayout';
 import ClientLayout from './pages/ClientLayout';
 import ClientPetsPage from './pages/ClientPetsPage';
 import ClientAppointmentsPage from './pages/ClientAppointmentsPage';
+import PetProfilePage from './pages/PetProfilePage';
+import ClientProfilePage from './pages/ClientProfilePage';
+import AdminProfilePage from './pages/AdminProfilePage';
+import AdminSettingsPage from './pages/AdminSettingsPage';
 
 function App() {
   return (
@@ -37,21 +41,25 @@ function App() {
         {/* Protected Admin Route */}
         <Route element={<PrivateRoute allowedRoles={['Admin']} />}>
           <Route element={<AdminLayout />}>
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/calendar" element={<AdminCalendarPage />} />
             <Route path="/admin/appointments" element={<AllAppointmentsPage />} />
             <Route path="/admin/invoices" element={<AllInvoicesPage />} />
             <Route path="/admin/clients" element={<AllClientsPage />} />
             <Route path="/admin/pets" element={<AllPetsPage />} />
             <Route path="/admin/services" element={<ManageServicesPage />} />
+            <Route path="/admin/profile" element={<AdminProfilePage />} />
+            <Route path="/admin/settings" element={<AdminSettingsPage />} />
           </Route>
         </Route>
 
         {/* Protected Client Route */}
         <Route element={<PrivateRoute allowedRoles={['Client', 'Admin']} />}>
           <Route element={<ClientLayout />}>
-            <Route path="/client/dashboard" element={<ClientDashboard />} />
+            <Route path="/client/calendar" element={<ClientCalendarPage />} />
             <Route path="/client/pets" element={<ClientPetsPage />} />
             <Route path="/client/appointments" element={<ClientAppointmentsPage />} />
+            <Route path="/pet/:petId" element={<PetProfilePage />} />
+            <Route path="/client/profile" element={<ClientProfilePage />} />
           </Route>
         </Route>
        
