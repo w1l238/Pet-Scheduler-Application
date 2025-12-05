@@ -21,7 +21,7 @@
 .modal-content {
     background: #fff;
     padding: 2rem;
-    border-radius: 8px;
+    border-radius: 1rem;
     width: 90%;
     max-width: 500px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
@@ -74,7 +74,7 @@
 .cancel-button, .save-button {
     padding: 0.6rem 1.2rem;
     border: none;
-    border-radius: 4px;
+    border-radius: 0.75rem;
     font-size: 1rem;
     font-weight: bold;
     cursor: pointer;
