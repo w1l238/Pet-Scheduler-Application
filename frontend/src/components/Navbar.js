@@ -2,7 +2,6 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiLogOut, FiLogIn, FiUserPlus, FiUser } from 'react-icons/fi'; // Import login/out, and register icons
 import { FaDog } from 'react-icons/fa' // Dog Icon
-import { MdOutlineSpaceDashboard } from 'react-icons/md'; // Dashboard Icon
 import Notifications from './Notifications'; // Import the new Notifications component
 import ClientNotifications from './ClientNotifications'; // Import the new ClientNotifications component
 import './Navbar.css';
@@ -47,13 +46,13 @@ function Navbar() {
                             )}
                             <li className="nav-item">
                                 {userRole === 'Admin' ? (
-                                    <Link to="/admin/dashboard" className="nav-links">
-                                        <MdOutlineSpaceDashboard /> <span className="sr-only">Dashboard</span>
-                                        </Link>
+                                    <Link to="/admin/profile" className="nav-links">
+                                        <FiUser /> <span className="sr-only">Profile</span>
+                                    </Link>
                                 ) : (
-                                    <Link to="/client/dashboard" className="nav-links">
-                                        <MdOutlineSpaceDashboard /> <span className="sr-only">Dashboard</span>
-                                        </Link>
+                                    <Link to="/client/profile" className="nav-links">
+                                        <FiUser /> <span className="sr-only">Profile</span>
+                                    </Link>
                                 )}
                             </li>
                             <li className="nav-item">
