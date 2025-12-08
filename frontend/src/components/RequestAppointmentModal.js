@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css'; // Import datepicker CSS
 import './RequestAppointmentModal.css';
 
 const decodeToken = (token) => {
@@ -14,11 +16,12 @@ function RequestAppointmentModal({ onClose, onAppointmentRequested }) {
     const [formData, setFormData] = useState({
         PetID: '',
         ServiceID: '',
-        AppointmentTime: '',
+        AppointmentTime: null, // Initialize as null for Date object
         Notes: '',
     });
     const [pets, setPets] = useState([]);
     const [services, setServices] = useState([]);
+    const [bookedAppointments, setBookedAppointments] = useState([]); // For disabling times
     const [message, setMessage] = useState('');
     const [showModal, setShowModal] = useState(false);
 
@@ -30,13 +33,21 @@ function RequestAppointmentModal({ onClose, onAppointmentRequested }) {
                 const token = localStorage.getItem('token');
                 const decodedToken = decodeToken(token);
                 const clientId = decodedToken?.user?.id;
-                if (clientId) {
-                    const petsRes = await api.get(`/clients/${clientId}/pets`);
-                    setPets(petsRes.data);
-                }
 
-                const servicesRes = await api.get('/services');
+                // Fetch pets, services, and booked times concurrently
+                const [petsRes, servicesRes, bookedTimesRes] = await Promise.all([
+                    clientId ? api.get(`/clients/${clientId}/pets`) : Promise.resolve({ data: [] }),
+                    api.get('/services'),
+                    api.get('/public/appointments/booked-times')
+                ]);
+
+                setPets(petsRes.data);
                 setServices(servicesRes.data);
+                setBookedAppointments(bookedTimesRes.data.map(appt => ({
+                    start: new Date(appt.start),
+                    end: new Date(appt.end)
+                })));
+
             } catch (err) {
                 console.error('Failed to fetch data for form', err);
                 setMessage('Could not load data for the appointment form.');
@@ -49,12 +60,39 @@ function RequestAppointmentModal({ onClose, onAppointmentRequested }) {
 
     const { PetID, ServiceID, AppointmentTime, Notes } = formData;
 
+    const handleDateChange = (date) => {
+        setFormData({ ...formData, AppointmentTime: date });
+    };
+
+    const filterTime = (time) => {
+        if (!ServiceID) {
+            return true; // Don't filter if no service is selected yet
+        }
+
+        const selectedService = services.find(s => s.serviceid === parseInt(ServiceID, 10));
+        if (!selectedService) {
+            return true;
+        }
+
+        const duration = selectedService.durationminutes;
+        const requestedStart = new Date(time);
+        const requestedEnd = new Date(requestedStart.getTime() + duration * 60000);
+
+        // Check for overlap with any booked appointments
+        const isOverlapping = bookedAppointments.some(appt =>
+            (requestedStart < appt.end && requestedEnd > appt.start)
+        );
+
+        return !isOverlapping;
+    };
+
     const onChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
 
     const handleClose = () => {
         setShowModal(false);
         setTimeout(onClose, 300);
     };
+
 
     const handleSubmit = async e => {
         e.preventDefault();
@@ -72,6 +110,7 @@ function RequestAppointmentModal({ onClose, onAppointmentRequested }) {
                 ...formData,
                 ClientID: clientId,
                 Status: 'Pending',
+                AppointmentTime: AppointmentTime.toISOString(), // Format for backend
             };
 
             await api.post('/appointments', appointmentData);
@@ -116,11 +155,19 @@ function RequestAppointmentModal({ onClose, onAppointmentRequested }) {
                     </div>
                     <div className="form-group">
                         <label>Date and Time</label>
-                        <input
-                            type="datetime-local"
-                            name="AppointmentTime"
-                            value={AppointmentTime}
-                            onChange={onChange}
+                        <DatePicker
+                            selected={AppointmentTime}
+                            onChange={handleDateChange}
+                            showTimeSelect
+                            use12Hours
+                            dateFormat="MM/dd/yyyy h:mm aa"
+                            minDate={new Date()} // Prevent selecting past dates
+                            filterTime={filterTime} // Add this prop
+                            timeFormat="h:mm aa"
+                            timeIntervals={15}
+                            timeCaption="Time"
+                            placeholderText="Select date and time"
+                            className="form-control" // Apply some basic styling
                             required
                         />
                     </div>
