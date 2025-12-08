@@ -28,6 +28,10 @@ import ClientProfilePage from './pages/ClientProfilePage';
 import AdminProfilePage from './pages/AdminProfilePage';
 import AdminSettingsPage from './pages/AdminSettingsPage';
 
+// Define allowed roles outside the component to prevent re-creation on every render
+const ADMIN_ALLOWED_ROLES = ['Admin'];
+const CLIENT_ALLOWED_ROLES = ['Client', 'Admin'];
+
 function App() {
   return (
     <Router>
@@ -39,7 +43,7 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         
         {/* Protected Admin Route */}
-        <Route element={<PrivateRoute allowedRoles={['Admin']} />}>
+        <Route element={<PrivateRoute allowedRoles={ADMIN_ALLOWED_ROLES} />}>
           <Route element={<AdminLayout />}>
             <Route path="/admin/calendar" element={<AdminCalendarPage />} />
             <Route path="/admin/appointments" element={<AllAppointmentsPage />} />
@@ -49,16 +53,17 @@ function App() {
             <Route path="/admin/services" element={<ManageServicesPage />} />
             <Route path="/admin/profile" element={<AdminProfilePage />} />
             <Route path="/admin/settings" element={<AdminSettingsPage />} />
+            <Route path="/admin/pet/:petId" element={<PetProfilePage />} />
           </Route>
         </Route>
 
         {/* Protected Client Route */}
-        <Route element={<PrivateRoute allowedRoles={['Client', 'Admin']} />}>
+        <Route element={<PrivateRoute allowedRoles={CLIENT_ALLOWED_ROLES} />}>
           <Route element={<ClientLayout />}>
             <Route path="/client/calendar" element={<ClientCalendarPage />} />
             <Route path="/client/pets" element={<ClientPetsPage />} />
             <Route path="/client/appointments" element={<ClientAppointmentsPage />} />
-            <Route path="/pet/:petId" element={<PetProfilePage />} />
+            <Route path="/client/pet/:petId" element={<PetProfilePage />} />
             <Route path="/client/profile" element={<ClientProfilePage />} />
           </Route>
         </Route>
