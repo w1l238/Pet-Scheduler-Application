@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { FaBell, FaCheck, FaTimes } from 'react-icons/fa';
 import api from '../api';
 import './Notifications.css';
@@ -6,7 +6,9 @@ import './Notifications.css';
 function Notifications() {
     const [notifications, setNotifications] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
+    const [isClosing, setIsClosing] = useState(false); // To handle fade-out animation
     const [error, setError] = useState('');
+    const dropdownRef = useRef(null); // Ref for the dropdown container
 
     const fetchNotifications = useCallback(async () => {
         try {
@@ -20,24 +22,36 @@ function Notifications() {
 
     useEffect(() => {
         fetchNotifications();
-        // Poll for new notifications every 30 seconds
         const interval = setInterval(fetchNotifications, 30000);
         return () => clearInterval(interval);
     }, [fetchNotifications]);
 
+    const handleClose = useCallback(() => {
+        if (isOpen) {
+            setIsClosing(true);
+        }
+    }, [isOpen]);
+
+    // Effect to handle clicks outside the dropdown
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (isOpen && dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                handleClose();
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isOpen, handleClose]); // Add handleClose to dependency array
+
     const handleUpdateStatus = async (id, newStatus) => {
         try {
-            // First, get the existing appointment details
             const res = await api.get(`/appointments/${id}`);
             const appointment = res.data;
-
-            // Update only the status
             const updatedAppointment = { ...appointment, status: newStatus };
-
-            // Send the update
             await api.put(`/appointments/${id}`, updatedAppointment);
-            
-            // Refresh the list
             fetchNotifications();
         } catch (err) {
             setError(`Failed to ${newStatus === 'Scheduled' ? 'approve' : 'deny'} appointment.`);
@@ -45,12 +59,25 @@ function Notifications() {
         }
     };
 
+
     const toggleDropdown = () => {
-        setIsOpen(!isOpen);
+        if (isOpen) {
+            handleClose();
+        } else {
+            setIsOpen(true);
+            setIsClosing(false); // Ensure it's not in closing state when opening
+        }
+    };
+
+    const onAnimationEnd = () => {
+        if (isClosing) {
+            setIsOpen(false);
+            setIsClosing(false);
+        }
     };
 
     return (
-        <div className="notifications">
+        <div className="notifications" ref={dropdownRef}>
             <button onClick={toggleDropdown} className="nav-links-button">
                 <FaBell />
                 {notifications.length > 0 && (
@@ -58,7 +85,10 @@ function Notifications() {
                 )}
             </button>
             {isOpen && (
-                <div className="notifications-dropdown">
+                <div 
+                    className={`notifications-dropdown ${isClosing ? 'fade-out' : 'fade-in'}`}
+                    onAnimationEnd={onAnimationEnd}
+                >
                     <div className="notifications-header">
                         Pending Appointments
                     </div>
