@@ -1,8 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import usePageTitle from '../hooks/usePageTitle';
 import './NotFoundPage.css';
 
 function NotFoundPage() {
+    usePageTitle('404 - Not Found', '/favicon.ico');
     return (
         <div className="not-found-container">
             <div className="not-found-content">

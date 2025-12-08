@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api';
 import { FaPaw, FaBirthdayCake, FaStickyNote } from 'react-icons/fa';
+import usePageTitle from '../hooks/usePageTitle';
 
 const PetProfilePage = () => {
     const { petId } = useParams();
@@ -9,6 +10,8 @@ const PetProfilePage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showPage, setShowPage] = useState(false);
+
+    usePageTitle(pet ? `${pet.name}'s Profile` : 'Pet Profile', '/favicon.ico');
 
     useEffect(() => {
         const fetchPet = async () => {
