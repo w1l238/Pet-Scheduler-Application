@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { FiClock, FiCheckCircle, FiCheckSquare, FiXCircle } from 'react-icons/fi';
+import ConfirmationModal from './ConfirmationModal';
 
 const statusIcons = {
     Pending: <FiClock />,
@@ -17,13 +18,25 @@ const decodeToken = (token) => {
     }
 };
 
-function ClientAppointmentManager({ version, onAppointmentUpdated }) {
+function ClientAppointmentManager({ version, onAppointmentUpdated, onLoadComplete }) {
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [sortCriteria, setSortCriteria] = useState('date-desc');
     const [statusFilter, setStatusFilter] = useState('All');
+
+    // State for confirmation modal
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [appointmentToCancel, setAppointmentToCancel] = useState(null);
+    const [confirmMessage, setConfirmMessage] = useState('');
+
+    // Effect to notify parent component when loading is finished
+    useEffect(() => {
+        if (!loading && onLoadComplete) {
+            onLoadComplete();
+        }
+    }, [loading, onLoadComplete]);
 
     useEffect(() => {
         const fetchAppointments = async () => {
@@ -56,19 +69,34 @@ function ClientAppointmentManager({ version, onAppointmentUpdated }) {
         fetchAppointments();
     }, [version]);
 
-    const handleUpdateStatus = async (id, newStatus) => {
-        try {
-            const res = await api.get(`/appointments/${id}`);
-            const appointmentToUpdate = res.data;
+    const handleCancelAppointment = (appointment) => {
+        setAppointmentToCancel(appointment);
+        setConfirmMessage(`Are you sure you want to cancel your appointment for ${appointment.petname} on ${new Date(appointment.appointmenttime).toLocaleString()}?`);
+        setShowConfirmModal(true);
+    };
 
-            const updatedAppointment = { ...appointmentToUpdate, status: newStatus };
+    const handleConfirmCancel = async () => {
+        setShowConfirmModal(false);
+        if (appointmentToCancel) {
+            try {
+                const res = await api.get(`/appointments/${appointmentToCancel.appointmentid}`);
+                const appointmentToUpdate = res.data;
 
-            await api.put(`/appointments/${id}`, updatedAppointment);
-            onAppointmentUpdated();
-        } catch (err) {
-            console.error('Failed to update appointment status', err);
-            setError('Failed to update status. Please try again.');
+                const updatedAppointment = { ...appointmentToUpdate, status: 'Canceled' };
+
+                await api.put(`/appointments/${appointmentToCancel.appointmentid}`, updatedAppointment);
+                onAppointmentUpdated();
+                setAppointmentToCancel(null);
+            } catch (err) {
+                console.error('Failed to update appointment status', err);
+                setError('Failed to update status. Please try again.');
+            }
         }
+    };
+
+    const handleCancel = () => {
+        setShowConfirmModal(false);
+        setAppointmentToCancel(null);
     };
 
     const filteredAndSortedAppointments = appointments
@@ -143,7 +171,7 @@ function ClientAppointmentManager({ version, onAppointmentUpdated }) {
                             </div>
                             <div className="item-actions">
                                 {(appt.status === 'Pending' || appt.status === 'Scheduled') && (
-                                    <button onClick={() => handleUpdateStatus(appt.appointmentid, 'Canceled')} className="delete-button">
+                                    <button onClick={() => handleCancelAppointment(appt)} className="delete-button">
                                         Cancel
                                     </button>
                                 )}
@@ -152,6 +180,13 @@ function ClientAppointmentManager({ version, onAppointmentUpdated }) {
                     ))}
                 </ul>
             )}
+
+            <ConfirmationModal
+                show={showConfirmModal}
+                message={confirmMessage}
+                onConfirm={handleConfirmCancel}
+                onCancel={handleCancel}
+            />
         </div>
     );
 }
