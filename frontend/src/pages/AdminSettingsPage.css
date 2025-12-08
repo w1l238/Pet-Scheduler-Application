@@ -1,6 +1,27 @@
+/* Keyframe for the simple fade-in effect */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
 .admin-settings-page {
     padding: 2rem;
+    /* The container itself is not animated. Its content is visible by default. */
 }
+
+/* The h1 will be visible immediately as it's not explicitly set to opacity 0 */
+
+/* Staggered fade-in for the settings sections */
+.settings-cards-container > .settings-section {
+    opacity: 0; /* Initial state for animation */
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Short delays for a quick but noticeable cascade */
+.settings-cards-container > .settings-section:nth-child(1) { animation-delay: 0s; } /* No delay for the first card */
+.settings-cards-container > .settings-section:nth-child(2) { animation-delay: 0.1s; }
+.settings-cards-container > .settings-section:nth-child(3) { animation-delay: 0.2s; }
+.settings-cards-container > .settings-section:nth-child(4) { animation-delay: 0.3s; }
 
 .admin-settings-page h2 {
     margin-top: 0;
