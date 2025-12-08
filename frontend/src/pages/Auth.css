@@ -1,6 +1,23 @@
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Set the INITIAL state of the element to be animated to prevent flicker. */
+.auth-page-layout .auth-form-wrapper {
+    opacity: 0;
+}
+
+/* When the 'loaded' class is added, run the animation. */
+.auth-page-layout.loaded .auth-form-wrapper {
+    animation: fadeIn 0.6s ease-out forwards;
+    animation-delay: 0s; /* No delay */
+}
+
 .auth-container {
     background: url(https://images.unsplash.com/photo-1477884213360-7e9d7dcc1e48?q=80&w=1770&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D);
-    height: 100vh; /* Use viewport height */
+    height: calc(100vh - 80px); /* Navbar height subtracted */
+    width: 100vw; /* Ensure it covers full width */
     background-size: cover; /* Cover the entire container */
     background-position: center; /* Center the image */
     background-repeat: no-repeat; /* Prevent image tiling */
@@ -8,18 +25,24 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: calc(100vh - 80px); /* Subtract navbar height */
-    padding: 2rem;
+    /* Removed padding from here */
+    overflow: hidden; /* Prevent auth-container's content from scrolling the body */
+    box-sizing: border-box; /* Ensure padding is included in height if re-added */
 }
 
 .auth-form-wrapper {
     width: 100%;
     max-width: 450px;
-    padding: 2.5rem;
+    margin: 2rem; /* Spacing from viewport edges */
+    padding: 2.5rem; /* Internal padding */
     background: #fff;
     border-radius: 1rem;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     text-align: center;
+    /* max-height should be 100% of auth-container minus its own vertical margins */
+    max-height: calc(100% - 4rem); /* 100% of parent height - 2rem top margin - 2rem bottom margin */
+    overflow-y: auto; /* Allow form content to scroll */
+    box-sizing: border-box; /* Ensure padding is included in height */
 }
 
 .auth-form-wrapper h1 {
