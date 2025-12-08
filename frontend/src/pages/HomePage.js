@@ -1,10 +1,23 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import usePageTitle from '../hooks/usePageTitle'; // Import the custom hook
 import './HomePage.css';
 
 function HomePage() {
+    usePageTitle('Pet Scheduler - Home', '/favicon.ico'); // Set the page title and favicon
+    const [isAnimated, setIsAnimated] = useState(false);
+
+    useEffect(() => {
+        // Set a timeout to trigger the animation shortly after the component mounts
+        const timer = setTimeout(() => {
+            setIsAnimated(true);
+        }, 100); // 100ms delay
+
+        return () => clearTimeout(timer); // Cleanup the timer
+    }, []);
+
     return (
-        <div className="container">
+        <div className={`container home-page-layout ${isAnimated ? 'loaded' : ''}`}>
             <header className="hero">
                 <h1>Welcome to The Pet Scheduler App!</h1>
                 <p>Your one-stop solution for managing pet appointments with ease.</p>

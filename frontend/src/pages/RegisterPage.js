@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import api from '../api';
+import usePageTitle from '../hooks/usePageTitle'; // Import the custom hook
 import './Auth.css';
 
 function RegisterPage() {
+    usePageTitle('Pet Scheduler - Register', '/favicon.ico'); // Set the page title and favicon
     const [formData, setFormData] = useState({
         FirstName: '',
         LastName: '',
@@ -12,9 +14,19 @@ function RegisterPage() {
         Password: '',
     });
     const [message, setMessage] = useState('');
+    const [isAnimated, setIsAnimated] = useState(false); // State for animation
     const navigate = useNavigate();
 
     const { FirstName, LastName, Email, PhoneNumber, Password } = formData;
+
+    useEffect(() => {
+        // Set a timeout to trigger the animation shortly after the component mounts
+        const timer = setTimeout(() => {
+            setIsAnimated(true);
+        }, 100); // 100ms delay
+
+        return () => clearTimeout(timer); // Cleanup the timer
+    }, []);
 
     const onChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -34,7 +46,7 @@ function RegisterPage() {
     };
 
     return (
-        <div className="auth-container">
+        <div className={`auth-container auth-page-layout ${isAnimated ? 'loaded' : ''}`}>
             <div className="auth-form-wrapper">
                 <h1>Register</h1>
                 <form onSubmit={onSubmit}>
