@@ -1,0 +1,23 @@
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* The h1 is visible immediately by default. */
+
+/* Set the INITIAL state of the elements to be animated to prevent flicker. */
+.all-appointments-layout .controls,
+.all-appointments-layout .dashboard-list {
+    opacity: 0;
+}
+
+/* When the 'loaded' class is added, run the animation on each element. */
+.all-appointments-layout.loaded .controls {
+    animation: fadeIn 0.4s ease-out forwards;
+    animation-delay: 0s; /* No delay */
+}
+
+.all-appointments-layout.loaded .dashboard-list {
+    animation: fadeIn 0.4s ease-out forwards;
+    animation-delay: 0.1s; /* After controls */
+}

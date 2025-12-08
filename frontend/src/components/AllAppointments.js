@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import api from '../api';
 import { FiClock, FiCheckCircle, FiCheckSquare, FiXCircle } from 'react-icons/fi';
 import {FaCheck, FaTimes } from 'react-icons/fa';
+import './AllAppointments.css'; // Import animation styles
 
 const statusIcons = {
     Pending: <FiClock />,
@@ -19,6 +20,7 @@ function AllAppointments() {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortCriteria, setSortCriteria] = useState('default');
     const [statusFilter, setStatusFilter] = useState('All');
+    const [isAnimated, setIsAnimated] = useState(false); // State for animation
     const location = useLocation();
     const highlightedId = location.state?.highlightedId;
 
@@ -38,6 +40,14 @@ function AllAppointments() {
 
         fetchAppointments();
     }, [version]);
+
+    // Effect for triggering animation after loading is complete
+    useEffect(() => {
+        if (!loading) {
+            const timer = setTimeout(() => setIsAnimated(true), 50); // Short delay for rendering
+            return () => clearTimeout(timer);
+        }
+    }, [loading]);
 
     const handleUpdateStatus = async (id, newStatus) => {
         try {
@@ -93,7 +103,7 @@ function AllAppointments() {
     }
 
     return (
-        <div>
+        <div className={`all-appointments-layout ${isAnimated ? 'loaded' : ''}`}>
             <header class="dashboard-header">
                 <h1>All Appointments</h1>
             </header>
