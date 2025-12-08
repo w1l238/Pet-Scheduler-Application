@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom'; // Removed Link
 import api from '../api';
+import ConfirmationModal from './ConfirmationModal'; // Import the new modal
+import './AllPets.css'; // Import animation styles
 
 function AllPets() {
     const [pets, setPets] = useState([]);
@@ -9,6 +11,13 @@ function AllPets() {
     const [version, setVersion] = useState(0); // To trigger re-fetch
     const [searchTerm, setSearchTerm] = useState('');
     const [sortCriteria, setSortCriteria] = useState('name-asc');
+    const [isAnimated, setIsAnimated] = useState(false); // State for animation
+
+    // State for confirmation modal
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [petToDeleteId, setPetToDeleteId] = useState(null);
+
+    const navigate = useNavigate(); // Initialize useNavigate
 
     useEffect(() => {
         const fetchPets = async () => {
@@ -27,16 +36,35 @@ function AllPets() {
         fetchPets();
     }, [version]);
 
-    const handleDeletePet = async (petId) => {
-        if (window.confirm('Are you sure you want to delete this pet?')) {
-            try {
-                await api.delete(`/pets/${petId}`);
-                setVersion(v => v + 1); //Trigger refresh
-            } catch (err) {
-                console.error('Failed to delete pet', err);
-                setError('Failed to delete pet. Please try again.');
-            }
+    // Effect for triggering animation after loading is complete
+    useEffect(() => {
+        if (!loading) {
+            const timer = setTimeout(() => setIsAnimated(true), 50); // Short delay for rendering
+            return () => clearTimeout(timer);
         }
+    }, [loading]);
+
+    const handleDeletePet = (petId) => {
+        setPetToDeleteId(petId);
+        setShowConfirmModal(true);
+    };
+
+    const confirmDelete = async () => {
+        try {
+            await api.delete(`/pets/${petToDeleteId}`);
+            setVersion(v => v + 1); //Trigger refresh
+        } catch (err) {
+            console.error('Failed to delete pet', err);
+            setError('Failed to delete pet. Please try again.');
+        } finally {
+            setShowConfirmModal(false);
+            setPetToDeleteId(null);
+        }
+    };
+
+    const cancelDelete = () => {
+        setShowConfirmModal(false);
+        setPetToDeleteId(null);
     };
 
     const filteredAndSortedPets = pets
@@ -73,7 +101,7 @@ function AllPets() {
     }
 
     return (
-        <div>
+        <div className={`all-pets-layout ${isAnimated ? 'loaded' : ''}`}>
             <header class="dashboard-header">
                 <h1>All Pets</h1>
             </header>
@@ -97,23 +125,28 @@ function AllPets() {
             ) : (
                 <ul className="dashboard-list">
                     {filteredAndSortedPets.map(pet => (
-                        <Link to={`/pet/${pet.petid}`}>
-                            <li key={pet.petid} className="dashboard-list-item">
-                                <img src={pet.profilephotourl || 'https://via.placeholder.com/50'} alt={`${pet.name}'s profile`} className="item-photo" />
-                                    <div className="item-details">
-                                        <strong>{pet.name}</strong> ({pet.breed || 'N/A'}) - {pet.age ? `${pet.age} years old` : 'Age not specified'}
-                                        <p>Owner: {pet.firstname} {pet.lastname}</p>
-                                    </div>
-                                <div className="item-actions">
-                                    <button onClick={() => handleDeletePet(pet.petid)} className="delete-button">
-                                        Delete
-                                    </button>
+                        <li key={pet.petid} className="dashboard-list-item" onClick={() => navigate(`/admin/pet/${pet.petid}`)}>
+                            <img src={pet.profilephotourl || 'https://via.placeholder.com/50'} alt={`${pet.name}'s profile`} className="item-photo" />
+                                <div className="item-details">
+                                    <strong>{pet.name}</strong> ({pet.breed || 'N/A'}) - {pet.age ? `${pet.age} years old` : 'Age not specified'}
+                                    <p>Owner: {pet.firstname} {pet.lastname}</p>
                                 </div>
-                            </li>
-                        </Link>   
+                            <div className="item-actions">
+                                <button onClick={(e) => { e.stopPropagation(); handleDeletePet(pet.petid); }} className="delete-button">
+                                    Delete
+                                </button>
+                            </div>
+                        </li>
                     ))}
                 </ul>
             )}
+
+            <ConfirmationModal
+                show={showConfirmModal}
+                message="Are you sure you want to delete this pet? This action cannot be undone."
+                onConfirm={confirmDelete}
+                onCancel={cancelDelete}
+            />
         </div>
     );
 }
