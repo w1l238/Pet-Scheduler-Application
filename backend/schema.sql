@@ -7,8 +7,7 @@ CREATE TABLE Client (
 	LastName VARCHAR(50) NOT NULL,
 	Email VARCHAR(100) UNIQUE NOT NULL,
 	PhoneNumber VARCHAR(20),
-	PasswordHash VARCHAR(255) NOT NULL,
-	ProfilePhotoURL TEXT,
+	ProfilePhotoURL TEXT DEFAULT 'https://imgs.search.brave.com/W2qFcMuXrJTn8B92Twc6t7zIDih8lkRfcmflWIkduHk/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/cG5nbWFydC5jb20v/ZmlsZXMvMjEvQWRt/aW4tUHJvZmlsZS1Q/TkctSXNvbGF0ZWQt/UGljLnBuZw',
 	CreatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 	Role VARCHAR(20) DEFAULT 'Client' NOT NULL
 );
@@ -21,7 +20,7 @@ CREATE TABLE Pet (
 	Breed VARCHAR(50),
 	Age INT,
 	Notes TEXT,
-	ProfilePhotoURL TEXT,
+	ProfilePhotoURL TEXT DEFAULT 'https://imgs.search.brave.com/K6W0zfpaPJCvOK3_7HIIoAJgsNfbgogZ64-WW8W7VhM/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9zdGF0/aWMudmVjdGVlenku/Y29tL3N5c3RlbS9y/ZXNvdXJjZXMvdGh1/bWJuYWlscy8wNjcv/ODE4LzMwOS9zbWFs/bC9taW5pbWFsaXN0/LWJsYWNrLWRvZy1z/aWxob3VldHRlLWlj/b24tdmVjdG9yLmpw/Zw',
 	CreatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (ClientID) REFERENCES Client(ClientID) ON DELETE CASCADE
 );
@@ -32,7 +31,8 @@ CREATE TABLE Service (
 	Name VARCHAR(100) NOT NULL,
 	Description TEXT,
 	Price DECIMAL(10, 2) NOT NULL,
-	DurationMinutes INT
+	DurationMinutes INT,
+	IsActive BOOLEAN DEFAULT TRUE NOT NULL
 );
 
 -- Appointment Table
