@@ -2,13 +2,17 @@ import React, { useState, useEffect, useCallback } from "react";
 import api from '../api';
 import AppointmentCalendar from "../components/AppointmentCalendar";
 import AppointmentListPane from "../components/AppointmentListPane";
+import usePageTitle from '../hooks/usePageTitle'; // Import the custom hook
 import './Dashboard.css';
+import './AdminCalendarPage.css'; // Import animation styles
 
 function AdminCalendarPage() {
+    usePageTitle('Admin - Calendar', '/favicon.ico'); // Set the page title and favicon
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [allAppointments, setAllAppointments] = useState([]);
     const [appointmentsForDate, setAppointmentsForDate] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isAnimated, setIsAnimated] = useState(false); // State for animation
 
     useEffect(() => {
         const fetchAppointments = async () => {
@@ -32,6 +36,14 @@ function AdminCalendarPage() {
         fetchAppointments();
     }, []);
 
+    // Effect for triggering animation after loading is complete
+    useEffect(() => {
+        if (!loading) {
+            const timer = setTimeout(() => setIsAnimated(true), 50); // Short delay for rendering
+            return () => clearTimeout(timer);
+        }
+    }, [loading]);
+
     const handleDateSelect = useCallback((date) => {
         setSelectedDate(date);
         const appointmentsForSelectedDate = allAppointments.filter(appt => 
@@ -52,7 +64,7 @@ function AdminCalendarPage() {
     }
 
     return (
-        <div className="calendar-page-container">
+        <div className={`calendar-page-container ${isAnimated ? 'loaded' : ''}`}>
             <header className="dashboard-header">
                 <h1>Calendar</h1>
             </header>
