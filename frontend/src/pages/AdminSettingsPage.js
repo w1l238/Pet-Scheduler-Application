@@ -5,8 +5,10 @@ import EditEmailTemplatesModal from '../components/EditEmailTemplatesModal';
 import EditInvoiceSettingsModal from '../components/EditInvoiceSettingsModal';
 import EditBookingRulesModal from '../components/EditBookingRulesModal';
 import EditBusinessProfileModal from '../components/EditBusinessProfileModal';
+import usePageTitle from '../hooks/usePageTitle';
 
 const AdminSettingsPage = () => {
+    usePageTitle('Admin - Settings', '/favicon.ico');
     const [settings, setSettings] = useState({
         invoice_due_days: '30',
         invoice_footer: '',
@@ -26,6 +28,7 @@ const AdminSettingsPage = () => {
     const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
     const [isBusinessModalOpen, setIsBusinessModalOpen] = useState(false);
+    const [pageLoaded, setPageLoaded] = useState(false); // State for animation
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -40,6 +43,14 @@ const AdminSettingsPage = () => {
         };
         fetchSettings();
     }, []);
+
+    useEffect(() => {
+        if (!isLoading) {
+            // A short delay ensures the initial state is rendered before the transition begins
+            const timer = setTimeout(() => setPageLoaded(true), 150);
+            return () => clearTimeout(timer);
+        }
+    }, [isLoading]);
 
     const handleSave = async (updatedSettings) => {
         setSuccess(null);
@@ -62,42 +73,44 @@ const AdminSettingsPage = () => {
     }
 
     return (
-        <div className="admin-settings-page">
-            <h2>Admin Settings</h2>
+        <div className={`admin-settings-page ${pageLoaded ? 'loaded' : ''}`}>
+            <h1>Admin Settings</h1>
             
             {error && <div className="error-message">{error}</div>}
             {success && <div className="success-message">{success}</div>}
 
-            <div className="settings-section">
-                <h3>Business Profile</h3>
-                <p>Manage your business's core information.</p>
-                <button onClick={() => setIsBusinessModalOpen(true)} className="button-primary">
-                    Edit Business Profile
-                </button>
-            </div>
+            <div className="settings-cards-container">
+                <div className="settings-section">
+                    <h3>Business Profile</h3>
+                    <p>Manage your business's core information.</p>
+                    <button onClick={() => setIsBusinessModalOpen(true)} className="button-primary">
+                        Edit Business Profile
+                    </button>
+                </div>
 
-            <div className="settings-section">
-                <h3>Email Templates</h3>
-                <p>Configure the content of automated reminder emails.</p>
-                <button onClick={() => setIsEmailModalOpen(true)} className="button-primary">
-                    Edit Email Templates
-                </button>
-            </div>
+                <div className="settings-section">
+                    <h3>Email Templates</h3>
+                    <p>Configure the content of automated reminder emails.</p>
+                    <button onClick={() => setIsEmailModalOpen(true)} className="button-primary">
+                        Edit Email Templates
+                    </button>
+                </div>
 
-            <div className="settings-section">
-                <h3>Invoice Settings</h3>
-                <p>Configure default settings for new invoices.</p>
-                <button onClick={() => setIsInvoiceModalOpen(true)} className="button-primary">
-                    Edit Invoice Settings
-                </button>
-            </div>
+                <div className="settings-section">
+                    <h3>Invoice Settings</h3>
+                    <p>Configure default settings for new invoices.</p>
+                    <button onClick={() => setIsInvoiceModalOpen(true)} className="button-primary">
+                        Edit Invoice Settings
+                    </button>
+                </div>
 
-            <div className="settings-section">
-                <h3>Booking & Appointment Rules</h3>
-                <p>Set rules for client bookings and cancellations.</p>
-                <button onClick={() => setIsBookingModalOpen(true)} className="button-primary">
-                    Edit Booking Rules
-                </button>
+                <div className="settings-section">
+                    <h3>Booking & Appointment Rules</h3>
+                    <p>Set rules for client bookings and cancellations.</p>
+                    <button onClick={() => setIsBookingModalOpen(true)} className="button-primary">
+                        Edit Booking Rules
+                    </button>
+                </div>
             </div>
 
             {isBusinessModalOpen && (
