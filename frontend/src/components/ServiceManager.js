@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api';
 import ServiceForm from './ServiceForm'; // Import the new unified form
 import { FiBarChart2 } from 'react-icons/fi'; // Icon for stats
+import ConfirmationModal from './ConfirmationModal'; // Import the new modal
+import './ServiceManager.css'; // Import animation styles
 
 function ServiceManager() {
     const [services, setServices] = useState([]);
@@ -12,6 +14,11 @@ function ServiceManager() {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortCriteria, setSortCriteria] = useState('name-asc');
     const [editingService, setEditingService] = useState(null);
+    const [isAnimated, setIsAnimated] = useState(false); // State for animation
+
+    // State for confirmation modal
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [serviceToDeleteId, setServiceToDeleteId] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -35,26 +42,45 @@ function ServiceManager() {
         fetchData();
     }, [version]);
 
-    const handleDeleteService = async (serviceId) => {
-        if (window.confirm('Are you sure you want to delete this service?')) {
-            try {
-                await api.delete(`/services/${serviceId}`);
-                setVersion(v => v + 1); // Re-fetch data
-            } catch (err) {
-                console.error('Failed to delete service', err);
-                setError('Failed to delete service. Please try again.');
-            }
+    // Effect for triggering animation after loading is complete
+    useEffect(() => {
+        if (!loading) {
+            const timer = setTimeout(() => setIsAnimated(true), 50); // Short delay for rendering
+            return () => clearTimeout(timer);
+        }
+    }, [loading]);
+
+    const handleDeleteService = (serviceId) => {
+        setServiceToDeleteId(serviceId);
+        setShowConfirmModal(true);
+    };
+
+    const confirmDelete = async () => {
+        try {
+            await api.delete(`/services/${serviceToDeleteId}`);
+            setVersion(v => v + 1); // Re-fetch data
+        } catch (err) {
+            console.error('Failed to delete service', err);
+            setError('Failed to delete service. Please try again.');
+        } finally {
+            setShowConfirmModal(false);
+            setServiceToDeleteId(null);
         }
     };
 
-    const handleSave = () => {
-        setEditingService(null); // Clear the form after save
-        setVersion(v => v + 1); // Re-fetch data to show changes
+    const cancelDelete = () => {
+        setShowConfirmModal(false);
+        setServiceToDeleteId(null);
     };
 
-    const handleClearForm = () => {
+    const handleSave = useCallback(() => {
+        setEditingService(null); // Clear the form after save
+        setVersion(v => v + 1); // Re-fetch data to show changes
+    }, []); // No dependencies, as it only updates state
+
+    const handleClearForm = useCallback(() => {
         setEditingService(null);
-    };
+    }, []); // No dependencies, as it only updates state
 
     const filteredAndSortedServices = services
         .filter(service => {
@@ -89,7 +115,7 @@ function ServiceManager() {
     }
 
     return (
-        <div className="service-manager-layout">
+        <div className={`service-manager-layout ${isAnimated ? 'loaded' : ''}`}>
             <header className="dashboard-header">
                 <h1>Manage Services</h1>
             </header>
@@ -157,6 +183,13 @@ function ServiceManager() {
                     />
                 </div>
             </div>
+
+            <ConfirmationModal
+                show={showConfirmModal}
+                message="Are you sure you want to delete this service? This action cannot be undone."
+                onConfirm={confirmDelete}
+                onCancel={cancelDelete}
+            />
         </div>
     );
 }

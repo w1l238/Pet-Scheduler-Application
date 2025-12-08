@@ -1,0 +1,30 @@
+/* Keyframe for the simple fade-in effect */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* The h1 and h2 are visible immediately by default. */
+
+/* Set the INITIAL state of the elements to be animated to prevent flicker. */
+.service-manager-layout .controls,
+.service-manager-layout .dashboard-list,
+.service-manager-layout .add-service-pane {
+    opacity: 0;
+}
+
+/* When the 'loaded' class is added, run the animation on each element. */
+.service-manager-layout.loaded .controls {
+    animation: fadeIn 0.4s ease-out forwards;
+    animation-delay: 0s; /* No delay */
+}
+
+.service-manager-layout.loaded .dashboard-list {
+    animation: fadeIn 0.4s ease-out forwards;
+    animation-delay: 0.1s; /* After controls */
+}
+
+.service-manager-layout.loaded .add-service-pane {
+    animation: fadeIn 0.5s ease-out forwards;
+    animation-delay: 0.1s; /* Same time as the list */
+}
