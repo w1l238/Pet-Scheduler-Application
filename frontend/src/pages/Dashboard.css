@@ -2,7 +2,7 @@
     width: 90%;
     max-width: 1400px;
     margin: 2rem auto;
-    padding: 0;
+    padding: 2rem 5rem; /* Re-introduced page-level padding */
 }
 
 .dashboard-header {
@@ -120,7 +120,7 @@ input:checked + .slider:before {
 .dashboard-card {
     background: #fff;
     padding: 1.5rem; /* Reduced padding */
-    border-radius: 8px;
+    border-radius: 1rem;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     display: flex;
@@ -130,7 +130,7 @@ input:checked + .slider:before {
 
 .dashboard-card:hover {
     /* transform: translateY(-5px); Previous animation on hover*/
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
 
 .dashboard-card h2 {
@@ -139,6 +139,45 @@ input:checked + .slider:before {
     color: #6a11cb;
     border-bottom: 2px solid #f0f0f0;
     padding-bottom: 0.5rem;
+}
+
+.pinned-admin-card {
+    margin-bottom: 2rem; /* Spacing below the pinned card */
+    transition: all 0.3s ease; /* Ensure smooth transition for new hover effects */
+}
+
+.pinned-admin-card:hover {
+    transform: translateY(-5px) scale(1.01); /* Lift and slightly enlarge */
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); /* More pronounced shadow */
+}
+
+.pinned-admin-details {
+    display: flex;
+    align-items: center;
+    gap: 1rem; /* Spacing between photo and text */
+    margin-top: 1rem; /* Space below the "Your Account" heading */
+}
+
+.pinned-admin-details .item-photo {
+    width: 60px; /* Slightly larger photo for the pinned card */
+    height: 60px;
+    flex-shrink: 0; /* Prevent photo from shrinking */
+}
+
+.pinned-admin-text-details {
+    flex-grow: 1; /* Allow text details to take up remaining space */
+    text-align: left;
+}
+
+.pinned-admin-text-details strong {
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.pinned-admin-text-details span {
+    font-size: 0.95rem;
+    color: #666;
+    display: block; /* Ensure email and role are on new lines */
 }
 
 .dashboard-card p {
