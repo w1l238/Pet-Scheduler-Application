@@ -23,6 +23,24 @@ app.get('/', (req, res) => {
 // Auth routes (register, login)
 app.use('/api/auth', authRoutes);
 
+// GET all booked appointment time slots
+app.get('/api/public/appointments/booked-times', async (req, res) => {
+    try {
+        const { rows } = await pool.query(`
+            SELECT
+                a.AppointmentTime as start,
+                a.AppointmentTime + s.DurationMinutes * INTERVAL '1 minute' as end
+            FROM Appointment a
+            JOIN Service s ON a.ServiceID = s.ServiceID
+            WHERE a.Status IN ('Scheduled', 'Pending')
+        `);
+        res.json(rows);
+    } catch (err) {
+        console.error('Error fetching booked times:', err.message);
+        res.status(500).send('Server error');
+    }
+});
+
 // --- Protected Routes ---
 
 // -- Client API Endpoints --
@@ -330,6 +348,31 @@ app.post('/api/appointments', authenticateToken, async (req, res) => {
 			return res.status(403).json({ message: 'Access denied: You can only create appointments for yourself.' });
 		}
 
+		// --- START: Double Booking Prevention ---
+        const serviceRes = await pool.query('SELECT DurationMinutes FROM Service WHERE ServiceID = $1', [ServiceID]);
+        if (serviceRes.rows.length === 0) {
+            return res.status(400).json({ message: 'Invalid service selected.' });
+        }
+        const durationMinutes = serviceRes.rows[0].durationminutes;
+        const durationInterval = `${durationMinutes} minutes`; // Create interval string
+
+        const conflictCheckQuery = `
+            SELECT a.AppointmentID
+            FROM Appointment a
+            WHERE
+                a.Status IN ('Scheduled', 'Pending') AND
+                (a.AppointmentTime, a.AppointmentTime + (SELECT s.DurationMinutes FROM Service s WHERE s.ServiceID = a.ServiceID) * INTERVAL '1 minute')
+                OVERLAPS
+                ($1::timestamptz, $1::timestamptz + $2::interval)
+        `;
+
+        const conflictCheck = await pool.query(conflictCheckQuery, [AppointmentTime, durationInterval]);
+
+        if (conflictCheck.rows.length > 0) {
+            return res.status(409).json({ message: 'This time slot is already booked. Please choose a different time.' });
+        }
+        // --- END: Double Booking Prevention ---
+
 		// Enforce minimum booking notice for non-admins
 		if (req.user.role !== 'Admin') {
 			const settingsRes = await pool.query('SELECT Value FROM Settings WHERE Name = $1', ['booking_minimum_notice_hours']);
@@ -450,10 +493,10 @@ app.delete('/api/appointments/:id', authenticateToken, async (req, res) => {
 
 // --- Service API Endpoints --- (ADMIN ONLY)
 
-// GET all services
+// GET all active services
 app.get('/api/services', authenticateToken, async (req, res) => {
 	try {
-		const { rows } = await pool.query('SELECT * FROM Service ORDER BY ServiceID ASC');
+		const { rows } = await pool.query('SELECT * FROM Service WHERE IsActive = true ORDER BY ServiceID ASC');
 		res.json(rows);
 	} catch (err) {
 		console.error(err.message);
@@ -530,15 +573,15 @@ app.put('/api/services/:id', authenticateToken, authorizeRoles(['Admin']), async
 	}
 });
 
-// DELETE a service by ID
+// DELETE (soft) a service by ID
 app.delete('/api/services/:id', authenticateToken, authorizeRoles(['Admin']), async (req, res) => {
 	try {
 		const { id } = req.params;
-		const { rowCount } = await pool.query('DELETE FROM Service WHERE ServiceID = $1', [id]);
+		const { rowCount } = await pool.query('UPDATE Service SET IsActive = false WHERE ServiceID = $1', [id]);
 		if (rowCount === 0) {
 			return res.status(404).json({ message: 'Service not found' });
 		}
-		res.json({ message: 'Service deleted successfully' });
+		res.json({ message: 'Service archived successfully' });
 	} catch (err) {
 		console.error(err.message);
 		res.status(500).send('Server error');
