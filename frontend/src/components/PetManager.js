@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import EditPetModal from './EditPetModal';
+import ConfirmationModal from './ConfirmationModal';
 
 const decodeToken = (token) => {
     try {
@@ -11,7 +12,7 @@ const decodeToken = (token) => {
     }
 };
 
-function PetManager({ version, onPetDeleted }) {
+function PetManager({ version, onPetDeleted, onLoadComplete }) {
     const [pets, setPets] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -19,6 +20,19 @@ function PetManager({ version, onPetDeleted }) {
     const [sortCriteria, setSortCriteria] = useState('name-asc');
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedPet, setSelectedPet] = useState(null);
+    const navigate = useNavigate();
+
+    // State for confirmation modal
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [petToDelete, setPetToDelete] = useState(null);
+    const [confirmMessage, setConfirmMessage] = useState('');
+
+    // Effect to notify parent component when loading is finished
+    useEffect(() => {
+        if (!loading && onLoadComplete) {
+            onLoadComplete();
+        }
+    }, [loading, onLoadComplete]);
 
     useEffect(() => {
         const fetchPets = async () => {
@@ -52,16 +66,29 @@ function PetManager({ version, onPetDeleted }) {
         fetchPets();
     }, [version]);
 
-    const handleDeletePet = async (petId) => {
-        if (window.confirm('Are you sure you want to delete this pet?')) {
+    const handleDeletePet = (pet) => {
+        setPetToDelete(pet);
+        setConfirmMessage(`Are you sure you want to delete ${pet.name}? This action cannot be undone.`);
+        setShowConfirmModal(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        setShowConfirmModal(false);
+        if (petToDelete) {
             try {
-                await api.delete(`/pets/${petId}`);
+                await api.delete(`/pets/${petToDelete.petid}`);
                 onPetDeleted(); // Notify parent to trigger re-fetch
+                setPetToDelete(null);
             } catch (err) {
                 console.error('Failed to delete pet', err);
                 setError('Failed to delete pet. Please try again.');
             }
         }
+    };
+
+    const handleCancelDelete = () => {
+        setShowConfirmModal(false);
+        setPetToDelete(null);
     };
 
     const openEditModal = (pet) => {
@@ -133,17 +160,17 @@ function PetManager({ version, onPetDeleted }) {
             ) : (
                 <ul className="dashboard-list">
                     {filteredAndSortedPets.map(pet => (
-                        <li key={pet.petid} className="dashboard-list-item">
+                        <li key={pet.petid} className="dashboard-list-item" onClick={() => navigate(`/client/pet/${pet.petid}`)}>
                             <img src={pet.profilephotourl || 'https://via.placeholder.com/50'} alt={`${pet.name}'s profile`} className="item-photo" />
                             <div className="item-details">
-                                <Link to={`/pet/${pet.petid}`}><strong>{pet.name}</strong></Link> ({pet.breed || 'N/A'}) - {pet.age ? `${pet.age} years old` : 'Age not specified'}
+                                <strong>{pet.name}</strong> ({pet.breed || 'N/A'}) - {pet.age ? `${pet.age} years old` : 'Age not specified'}
                                 {pet.notes && <p>Notes: {pet.notes}</p>}
                             </div>
                             <div className="item-actions">
-                                <button onClick={() => openEditModal(pet)} className="edit-button">
+                                <button onClick={(e) => { e.stopPropagation(); openEditModal(pet); }} className="edit-button">
                                     Edit
                                 </button>
-                                <button onClick={() => handleDeletePet(pet.petid)} className="delete-button">
+                                <button onClick={(e) => { e.stopPropagation(); handleDeletePet(pet); }} className="delete-button">
                                     Delete
                                 </button>
                             </div>
@@ -159,6 +186,13 @@ function PetManager({ version, onPetDeleted }) {
                     onPetUpdated={handlePetUpdated}
                 />
             )}
+
+            <ConfirmationModal
+                show={showConfirmModal}
+                message={confirmMessage}
+                onConfirm={handleConfirmDelete}
+                onCancel={handleCancelDelete}
+            />
         </div>
     );
 }
