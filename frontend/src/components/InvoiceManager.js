@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api';
 import { FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
+import './InvoiceManager.css'; // Import animation styles
 
 const statusIcons = {
     Unpaid: <FiAlertCircle />,
@@ -15,6 +16,7 @@ function InvoiceManager() {
     const [version, setVersion] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortCriteria, setSortCriteria] = useState('date-desc');
+    const [isAnimated, setIsAnimated] = useState(false); // State for animation
 
     useEffect(() => {
         const fetchInvoices = async () => {
@@ -32,6 +34,14 @@ function InvoiceManager() {
 
         fetchInvoices();
     }, [version]);
+
+    // Effect for triggering animation after loading is complete
+    useEffect(() => {
+        if (!loading) {
+            const timer = setTimeout(() => setIsAnimated(true), 50); // Short delay for rendering
+            return () => clearTimeout(timer);
+        }
+    }, [loading]);
 
     const handleUpdateStatus = async (invoiceId, newStatus) => {
         try {
@@ -96,7 +106,7 @@ function InvoiceManager() {
     }
 
     return (
-        <div>
+        <div className={`invoice-manager-layout ${isAnimated ? 'loaded' : ''}`}>
             <header class="dashboard-header">
                     <h1>All Invoices</h1>
             </header>
