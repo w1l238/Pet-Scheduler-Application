@@ -3,6 +3,7 @@ import api from '../api';
 import './AdminProfilePage.css';
 import EditAdminProfileModal from '../components/EditAdminProfileModal';
 import { FaEnvelope, FaPhone, FaUserEdit } from 'react-icons/fa';
+import usePageTitle from '../hooks/usePageTitle';
 
 const decodeToken = (token) => {
     try {
@@ -13,6 +14,7 @@ const decodeToken = (token) => {
 };
 
 const AdminProfilePage = () => {
+    usePageTitle('Admin - Profile', '/favicon.ico');
     const [admin, setAdmin] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -79,39 +81,38 @@ const AdminProfilePage = () => {
         return <div>Admin not found</div>;
     }
 
-    return (
-        <div className="profile-page-container">
-            <div className={`profile-card ${showPage ? 'show' : ''}`}>
-                <div className="profile-card-header">
-                    <img src={admin.profilephotourl || 'https://via.placeholder.com/150'} alt={`${admin.firstname}'s profile`} className="profile-photo" />
-                    <h1>{admin.firstname} {admin.lastname}</h1>
-                    <button onClick={() => setIsEditModalOpen(true)} className="edit-profile-button">
-                        <FaUserEdit /> Edit Profile
-                    </button>
-                </div>
-                <div className="profile-card-body">
-                    <div className="profile-info-item">
-                        <FaEnvelope className="info-icon" />
-                        <span>{admin.email}</span>
+        return (
+            <div className="profile-page-container">
+                <div className={`profile-card ${showPage ? 'show' : ''}`}>
+                    <div className="profile-card-header">
+                        <img src={admin.profilephotourl || 'https://via.placeholder.com/150'} alt={`${admin.firstname}'s profile`} className="profile-photo" />
+                        <h1>{admin.firstname} {admin.lastname}</h1>
+                        <button onClick={() => setIsEditModalOpen(true)} className="edit-profile-button">
+                            <FaUserEdit /> Edit Profile
+                        </button>
                     </div>
-                    {admin.phonenumber && (
+                    <div className="profile-card-body">
                         <div className="profile-info-item">
-                            <FaPhone className="info-icon" />
-                            <span>{admin.phonenumber}</span>
+                            <FaEnvelope className="info-icon" />
+                            <span>{admin.email}</span>
                         </div>
-                    )}
+                        {admin.phonenumber && (
+                            <div className="profile-info-item">
+                                <FaPhone className="info-icon" />
+                                <span>{admin.phonenumber}</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
+    
+                {isEditModalOpen && (
+                    <EditAdminProfileModal
+                        admin={admin}
+                        onSave={handleSave}
+                        onClose={() => setIsEditModalOpen(false)}
+                    />
+                )}
             </div>
-
-            {isEditModalOpen && (
-                <EditAdminProfileModal
-                    admin={admin}
-                    onSave={handleSave}
-                    onClose={() => setIsEditModalOpen(false)}
-                />
-            )}
-        </div>
-    );
-};
-
+        );
+    };
 export default AdminProfilePage;
