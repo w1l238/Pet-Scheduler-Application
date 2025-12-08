@@ -53,6 +53,11 @@ function AddPetModal({ onClose, onPetAdded }) {
 
             const petData = { ...formData, ClientID: clientId };
 
+            // If ProfilePhotoURL is empty, set it to the default image URL
+            if (!petData.ProfilePhotoURL) {
+                petData.ProfilePhotoURL = 'https://imgs.search.brave.com/K6W0zfpaPJCvOK3_7HIIoAJgsNfbgogZ64-WW8W7VhM/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9zdGF0/aWMudmVjdGVlenku/Y29tL3N5c3RlbS9y/ZXNvdXJjZXMvdGh1/bWJuYWlscy8wNjcv/ODE4LzMwOS9zbWFs/bC9taW5pbWFsaXN0/LWJsYWNrLWRvZy1z/aWxob3VldHRlLWlj/b24tdmVjdG9yLmpw/Zw';
+            }
+
             await api.post('/pets', petData);
             setMessage('Pet added successfully!');
             if (onPetAdded) {
