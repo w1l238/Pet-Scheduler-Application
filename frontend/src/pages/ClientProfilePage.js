@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
+import usePageTitle from '../hooks/usePageTitle';
 import './ClientProfilePage.css';
 import EditClientProfileModal from '../components/EditClientProfileModal';
 import { FaEnvelope, FaPhone, FaUserEdit } from 'react-icons/fa';
@@ -14,6 +15,7 @@ const decodeToken = (token) => {
 };
 
 const ClientProfilePage = () => {
+    usePageTitle('Client - Profile', '/favicon.ico');
     const [client, setClient] = useState(null);
     const [pets, setPets] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -117,7 +119,7 @@ const ClientProfilePage = () => {
                 <h2>My Pets</h2>
                 <div className="pet-grid">
                     {pets.map(pet => (
-                        <div key={pet.petid} className="pet-card" onClick={() => navigate(`/pet/${pet.petid}`)}>
+                        <div key={pet.petid} className="pet-card" onClick={() => navigate(`/client/pet/${pet.petid}`)}>
                             <img src={pet.profilephotourl || 'https://via.placeholder.com/150'} alt={`${pet.name}'s profile`} className="pet-card-photo" />
                             <div className="pet-card-name">{pet.name}</div>
                         </div>
