@@ -1,9 +1,23 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom'; // Import ReactDOM
 import './EditEmailTemplatesModal.css';
 
 const EditEmailTemplatesModal = ({ settings, onSave, onClose }) => {
     const [localSettings, setLocalSettings] = useState(settings);
     const [showModal, setShowModal] = useState(false);
+    const [portalNode, setPortalNode] = useState(null); // State to hold the portal DOM node
+
+    useEffect(() => {
+        // Create a div element to append to the body for the portal
+        const node = document.createElement('div');
+        document.body.appendChild(node);
+        setPortalNode(node);
+
+        // Cleanup function to remove the node when the component unmounts
+        return () => {
+            document.body.removeChild(node);
+        };
+    }, []); // Run only once on mount
 
     useEffect(() => {
         const timer = setTimeout(() => setShowModal(true), 10);
@@ -28,7 +42,11 @@ const EditEmailTemplatesModal = ({ settings, onSave, onClose }) => {
         setTimeout(onClose, 300); // Wait for animation to finish
     };
 
-    return (
+    if (!portalNode) {
+        return null; // Don't render until the portal node is ready
+    }
+
+    return ReactDOM.createPortal(
         <div className={`modal-overlay ${showModal ? 'show' : ''}`} onClick={handleClose}>
             <div className="modal-content email-templates-modal" onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
@@ -106,7 +124,8 @@ const EditEmailTemplatesModal = ({ settings, onSave, onClose }) => {
                     <button onClick={handleSave} className="button-primary">Save Changes</button>
                 </div>
             </div>
-        </div>
+        </div>,
+        portalNode
     );
 };
 

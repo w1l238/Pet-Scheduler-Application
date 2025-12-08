@@ -8,6 +8,7 @@ function EditClientModal({ client, onClose, onSave }) {
         LastName: '',
         Email: '',
         Role: '',
+        ProfilePhotoURL: '', // Add ProfilePhotoURL
     });
     const [message, setMessage] = useState('');
     const [showModal, setShowModal] = useState(false);
@@ -20,6 +21,7 @@ function EditClientModal({ client, onClose, onSave }) {
                 LastName: client.lastname || '',
                 Email: client.email || '',
                 Role: client.role || 'Client',
+                ProfilePhotoURL: client.profilephotourl || '', // Initialize ProfilePhotoURL
             });
         }
         // For the fade-in effect
@@ -27,7 +29,7 @@ function EditClientModal({ client, onClose, onSave }) {
         return () => clearTimeout(timer);
     }, [client]);
 
-    const { FirstName, LastName, Email, Role } = formData;
+    const { FirstName, LastName, Email, Role, ProfilePhotoURL } = formData;
 
     const onChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -96,6 +98,15 @@ function EditClientModal({ client, onClose, onSave }) {
                             <option value="Client">Client</option>
                             <option value="Admin">Admin</option>
                         </select>
+                    </div>
+                    <div className="form-group">
+                        <label>Profile Photo URL</label>
+                        <input
+                            type="text"
+                            name="ProfilePhotoURL"
+                            value={ProfilePhotoURL}
+                            onChange={onChange}
+                        />
                     </div>
                     <div className="modal-footer">
                         <button type="button" onClick={handleClose} className="cancel-button">Cancel</button>
