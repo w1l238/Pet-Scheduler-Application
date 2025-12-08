@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaBell } from 'react-icons/fa';
 import api from '../api';
@@ -7,8 +7,10 @@ import './ClientNotifications.css';
 function ClientNotifications() {
     const [notifications, setNotifications] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
+    const [isClosing, setIsClosing] = useState(false); // To handle fade-out animation
     const [error, setError] = useState('');
     const navigate = useNavigate();
+    const dropdownRef = useRef(null); // Ref for the dropdown container
 
     const fetchNotifications = useCallback(async () => {
         try {
@@ -27,11 +29,31 @@ function ClientNotifications() {
         return () => clearInterval(interval);
     }, [fetchNotifications]);
 
+    const handleClose = useCallback(() => {
+        if (isOpen) {
+            setIsClosing(true);
+        }
+    }, [isOpen]);
+
+    // Effect to handle clicks outside the dropdown
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (isOpen && dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                handleClose();
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isOpen, handleClose]);
+
     const handleMarkAllAsRead = async () => {
         try {
             await api.put('/notifications/read-all');
             setNotifications([]); // Clear notifications from view
-            setIsOpen(false); // Close dropdown
+            handleClose(); // Close dropdown with animation
         } catch (err) {
             setError('Failed to mark notifications as read.');
             console.error(err);
@@ -47,11 +69,23 @@ function ClientNotifications() {
     };
 
     const toggleDropdown = () => {
-        setIsOpen(!isOpen);
+        if (isOpen) {
+            handleClose();
+        } else {
+            setIsOpen(true);
+            setIsClosing(false);
+        }
+    };
+
+    const onAnimationEnd = () => {
+        if (isClosing) {
+            setIsOpen(false);
+            setIsClosing(false);
+        }
     };
 
     return (
-        <div className="client-notifications">
+        <div className="client-notifications" ref={dropdownRef}>
             <button onClick={toggleDropdown} className="nav-links-button">
                 <FaBell />
                 {notifications.length > 0 && (
@@ -59,7 +93,10 @@ function ClientNotifications() {
                 )}
             </button>
             {isOpen && (
-                <div className="client-notifications-dropdown">
+                <div 
+                    className={`client-notifications-dropdown ${isClosing ? 'fade-out' : 'fade-in'}`}
+                    onAnimationEnd={onAnimationEnd}
+                >
                     <div className="client-notifications-header">
                         <span>Notifications</span>
                         {notifications.length > 0 && (
