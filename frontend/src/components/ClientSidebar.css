@@ -19,6 +19,7 @@
     padding: 1rem;
     display: flex;
     justify-content: flex-start; /* Left-justify when expanded */
+    align-items: center;
 }
 
 .client-sidebar.collapsed .client-sidebar-header {
@@ -37,6 +38,10 @@
     justify-content: center;
     width: 24px; /* Match icon width */
     height: 24px; /* Match icon height */
+}
+
+.client-sidebar:not(.collapsed) .sidebar-toggle-button {
+    margin-left: 0.5rem; /* Adjust as needed */
 }
 
 
