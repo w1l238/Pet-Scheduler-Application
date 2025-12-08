@@ -8,6 +8,9 @@
     margin-left: 250px; /* Match sidebar width */
     width: calc(100% - 250px);
     transition: margin-left 0.3s ease, width 0.3s ease;
+    height: calc(100vh - 80px); /* Account for Navbar height */
+    overflow-y: auto; /* Make this area scrollable */
+    box-sizing: border-box; /* Include padding in height calculation */
 }
 
 .admin-layout.collapsed .admin-content {
