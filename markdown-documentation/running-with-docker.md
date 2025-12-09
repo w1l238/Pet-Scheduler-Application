@@ -73,3 +73,13 @@ docker-compose down
 ```
 
 This will stop and remove the containers, but the database data will be preserved in a Docker volume named `db_data`.
+
+# 6. Changing your role
+
+The default role for every account is 'client'. If you need to promote your account to admin (where there is no admin account to do this). Run this command in your docker container (assuming you want to promote the first account to admin):
+
+```bash
+docker exec -it pet_scheduler_db psql -U user -d pet_scheduler_db -c "UPDATE Client SET Role = 'Admin' WHERE ClientID = 1;"
+```
+
+This will promote the account to admin status and unlock all management features.

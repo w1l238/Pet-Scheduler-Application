@@ -8,7 +8,7 @@ A quick overview of what the project does
 *   **Prerequisites:** A section that lists the required software (Node.js, Docker, etc.) and their versions. [COMPLETED]
 *   **Installation:** The overview of how to install the project. [COMPLETED]
 *   **Running with Docker:** The overview of how to run the project using docker. [COMPLETED]
-*   **Configuration:** A section explaining the environment variables (`.env` files) for both the frontend and backend.
+*   **Configuration:** A section explaining the environment variables (`.env` files) for both the frontend and backend. [COMPLETED]
 
 ## Features
 The overview of each feature, it's purpose, and how to utilize it.
