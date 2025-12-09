@@ -7,6 +7,7 @@ CREATE TABLE Client (
 	LastName VARCHAR(50) NOT NULL,
 	Email VARCHAR(100) UNIQUE NOT NULL,
 	PhoneNumber VARCHAR(20),
+	PasswordHash TEXT NOT NULL,
 	ProfilePhotoURL TEXT DEFAULT 'https://imgs.search.brave.com/W2qFcMuXrJTn8B92Twc6t7zIDih8lkRfcmflWIkduHk/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/cG5nbWFydC5jb20v/ZmlsZXMvMjEvQWRt/aW4tUHJvZmlsZS1Q/TkctSXNvbGF0ZWQt/UGljLnBuZw',
 	CreatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 	Role VARCHAR(20) DEFAULT 'Client' NOT NULL
