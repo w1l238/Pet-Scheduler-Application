@@ -12,6 +12,7 @@ Git clone this repo:
 The next step to build this project is to read the documentation for this project, Run the following commands to start the documentation server:
 
     cd docs/
+    npm install
     npm start
 
 This will start the documentation server which should open in your browser and display the documentation. From here you can read the documentation and choose to either install baremetal or through docker-compose.
