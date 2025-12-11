@@ -2,31 +2,18 @@
 
 React Application to manage pets, clients, appointments, and services.
 
-## Setup
+## First Steps
 
-    1. Clone repo
-    2. Edit .env in backend folder to setup config
-    3. cd ~/backend/ && npm install
-    4. node server.js
-    5. New Terminal and cd ~/frontend/ && npm install
-    6. npm start
-    7. Done.
+The first steps to build this project is to read the documentation for this project, Run the following commands to start the documentation server:
 
-### Issues
+    cd docs/
+    npm start
 
-For 'Local Storage' error in the frontend change:
-    
-    "scripts": {
-        "start": "react-scripts start",
-To
-    
-    "start": "NODE_OPTIONS='--localstorage-file=~/.local/tmp/Pet-Scheduler-App/localstorage.json' react-scripts start",
+This will start the documentation server which should open in your browser and display the documentation. From here you can read the documentation and choose to either install baremetal or through docker-compose.
 
-### Setup
-
-#### Email Automated Reminders via Cron Job
+<!-- #### Email Automated Reminders via Cron Job
     
     crontab -e
     */5 * * * * curl -X POST http://localhost:5000/api/reminders/send -H "x-cron-secret: your_super_secret_string_from_env_file_here" >/dev/null 2>&1
 
-This will curl the api/reminders/send address every 5 minutes to automate the reminders.
+This will curl the api/reminders/send address every 5 minutes to automate the reminders. -->
