@@ -93,7 +93,7 @@ The frontend does not require a `.env` file for basic setup. The React developme
 In the `backend` directory, run the following command to start the Node.js server:
 
 ```bash
-npm start
+node server.js
 ```
 
 The backend server will run on `http://localhost:5000`.
