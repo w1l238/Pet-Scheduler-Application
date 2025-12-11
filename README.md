@@ -3,6 +3,8 @@
 React Application to manage pets, clients, appointments, and services.
 
 ## First Steps
+Make sure you have `git` and `node.js` installed prior to attempting these commands.
+
 Git clone this repo:
 
     git clone https://github.com/w1l238/Pet-Scheduler-Application
