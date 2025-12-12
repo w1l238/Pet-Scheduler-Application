@@ -5,4 +5,4 @@
 - [x] Editing and saving client on admin account removes default ProfilePhotoURL. Likely tied to API call for modal save button which is taking ProfilePhotoURL and setting it back to ''.
 - [x] Add check for each new requested appointment to ensure no double bookings.
 - [ ] Create documentation (using docusaurus).
-- [ ] 
+- [x] Customize docusaurus. 
