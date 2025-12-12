@@ -21,3 +21,23 @@
     animation: fadeIn 0.4s ease-out forwards;
     animation-delay: 0.1s; /* After controls */
 }
+
+/* Styles for profile photo placeholder */
+.profile-photo-placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #e0e0e0; /* Light gray background */
+    color: #6a11cb; /* Primary color for text */
+    font-weight: bold;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #f8f9fa;
+}
+
+/* Specific size for the item-photo context */
+.dashboard-list-item .profile-photo-placeholder.item-photo {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem; /* Smaller font for list items */
+}
