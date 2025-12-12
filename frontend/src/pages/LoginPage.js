@@ -1,28 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
-import usePageTitle from '../hooks/usePageTitle'; // Import the custom hook
+import usePageTitle from '../hooks/usePageTitle';
+import Toast from '../components/Toast'; // Import Toast component
 import './Auth.css';
 
 function LoginPage() {
-    usePageTitle('Pet Scheduler - Login', '/favicon.ico'); // Set the page title and favicon
+    usePageTitle('Pet Scheduler - Login');
     const [formData, setFormData] = useState({
         Email: '',
         Password: '',
     });
-    const [message, setMessage] = useState('');
-    const [isAnimated, setIsAnimated] = useState(false); // State for animation
+    const [toast, setToast] = useState({ message: '', type: '' }); // State for toast
+    const [isAnimated, setIsAnimated] = useState(false);
     const navigate = useNavigate();
 
     const { Email, Password } = formData;
 
     useEffect(() => {
-        // Set a timeout to trigger the animation shortly after the component mounts
         const timer = setTimeout(() => {
             setIsAnimated(true);
-        }, 100); // 100ms delay
-
-        return () => clearTimeout(timer); // Cleanup the timer
+        }, 100);
+        return () => clearTimeout(timer);
     }, []);
 
     const onChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -32,7 +31,9 @@ function LoginPage() {
         try {
             const res = await api.post('/auth/login', formData);
             localStorage.setItem('token', res.data.token);
-            setMessage('Login successful!');
+            
+            // We don't show a toast on success, we navigate away
+            // setToast({ message: 'Login successful!', type: 'success' });
 
             const token = res.data.token;
             const decodedToken = JSON.parse(atob(token.split('.')[1]));
@@ -45,13 +46,14 @@ function LoginPage() {
             }
         } catch (err) {
             console.error(err.response ? err.response.data : err.message);
-            const errorMessage = err.response ? err.response.data.message : 'Server error';
-            setMessage(errorMessage);
+            const errorMessage = err.response?.data?.message || 'Server error. Please try again later.';
+            setToast({ message: errorMessage, type: 'error' });
         }
     };
 
     return (
         <div className={`auth-container auth-page-layout ${isAnimated ? 'loaded' : ''}`}>
+            <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: '' })} />
             <div className="auth-form-wrapper">
                 <h1>Login</h1>
                 <form onSubmit={onSubmit}>
@@ -79,7 +81,6 @@ function LoginPage() {
                     </div>
                     <button type="submit" className="auth-button">Login</button>
                 </form>
-                {message && <p className={`message ${message === 'Login successful!' ? 'success' : ''}`}>{message}</p>}
                 <p>
                     Don't have an account? <Link to="/register">Register</Link>
                 </p>
