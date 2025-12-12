@@ -60,7 +60,7 @@ Once the containers are up and running, you can access the application in your w
 
 *   **Frontend:** [http://localhost](http://localhost) (Nginx is configured to serve the React app on port 80)
 *   **Backend:** The backend is not directly accessible from the host machine, but it's running on port 5000 inside the Docker network.
-*   **Database:** The PostgreSQL database is accessible on port 5432 on the host machine.
+*   **Database:** The PostgreSQL database is accessible on port **5433** on the host machine.
 
 ## 5. Stopping the Application
 
@@ -89,6 +89,3 @@ docker exec -it pet_scheduler_db psql -U user -d pet_scheduler_db -c "UPDATE Cli
 ```
 
 This will promote the account to admin status and unlock all management features.
-
-## Continue
-Once confirming that the container is functional and running. Continue to the next section and find `Docker Deployment` under both frontend and backend to configure your container.
