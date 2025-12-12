@@ -29,43 +29,46 @@ npm install
 
 ### b. Configure Environment Variables
 
-Edit the `.env` file in the `backend` directory with your chosen editor (we will use nano for this). This file will store your database credentials and other sensitive information.
+Create a `.env` file in the `backend` directory. This file will store your database credentials and other sensitive information.
 
 ```bash
-nano .env
+nano backend/.env
 ```
 
-The env's structure is like so:
+Add the following variables, replacing the values with your local configuration:
 
 ```
-DB_USER=
-DB_LOCALHOST=
-DB_DATABASE=
-DB_PORT=
-JWT_SECRET=
+# PostgreSQL Database Credentials
+DB_USER=your_db_user
+DB_HOST=localhost
+DB_DATABASE=pet_scheduler_db
+DB_PASSWORD=your_db_password
+DB_PORT=5432
 
-EMAIL_HOST=
-EMAIL_PORT=
-EMAIL_USER=
-EMAIL_PASS=
+# JWT Secret for authentication
+JWT_SECRET=your_very_secret_jwt_key_here
 
-CRON_SECRET=
+# Email Service Credentials (e.g., for Ethereal, Mailgun)
+EMAIL_HOST=smtp.ethereal.email
+EMAIL_PORT=587
+EMAIL_USER=your_email_user
+EMAIL_PASS=your_email_password
+
+# Secret for protecting the cron job endpoint
+CRON_SECRET=a_strong_cron_secret
 ```
-
-Refer to the [github's env file](https://github.com/w1l238/Pet-Scheduler-Application/blob/master/backend/.env) for more info for each variable.
- 
 
 ### c. Set Up the Database
 
 1.  **Create the Database:**
-    Open your PostgreSQL client (e.g., `psql`) and create a new database named `pet_scheduler_db` (You can create any name but make sure to reflect that in your .env file, we will use 'pet_scheduler_db' for this example):
+    Open your PostgreSQL client (e.g., `psql`) and create a new database. We will use `pet_scheduler_db` for this example, but you can use any name as long as it matches your `.env` file.
 
     ```sql
     CREATE DATABASE pet_scheduler_db;
     ```
 
 2.  **Create the Tables:**
-    Run the `schema.sql` file to create the necessary tables in your database:
+    While in the `backend` directory, run the `schema.sql` file to create the necessary tables in your new database:
 
     ```bash
     psql -d pet_scheduler_db -f schema.sql
@@ -84,7 +87,17 @@ npm install
 
 ### b. Configure Environment Variables
 
-The frontend does not require a `.env` file for basic setup. The React development server will run on `http://localhost:3000` by default.
+Create a `.env` file in the `frontend` directory to tell the React application where to find the backend API.
+
+```bash
+nano frontend/.env
+```
+
+Add the following line. This URL must point to your local backend server.
+
+```
+REACT_APP_API_BASE_URL=http://localhost:5000/api
+```
 
 ## 4. Running the Application
 
