@@ -49,6 +49,13 @@ These components are the primary views for admins to manage different parts of t
 
 ---
 
+## Profile Pages
+
+*   **`ClientProfilePage.js`**: A dedicated page that displays the full profile for a single client, including their contact information, profile photo, and a list of their pets.
+*   **`PetProfilePage.js`**: A dedicated page that displays the full profile for a single pet, including their photo, breed, age, and any notes.
+
+---
+
 ## Shared Components
 
 *   **`AppointmentCalendar.js`**: A large, full-page calendar view that displays scheduled appointments. It is used on both the admin and client dashboards.
