@@ -8,10 +8,12 @@ function EditClientModal({ client, onClose, onSave }) {
         LastName: '',
         Email: '',
         Role: '',
-        ProfilePhotoURL: '', // Add ProfilePhotoURL
+        ProfilePhotoPath: '', // Changed from ProfilePhotoURL
+        ProfilePhotoHash: '', // Added ProfilePhotoHash
     });
     const [message, setMessage] = useState('');
     const [showModal, setShowModal] = useState(false);
+    const [selectedFile, setSelectedFile] = useState(null); // Added for file input
 
     useEffect(() => {
         // Initialize form data when a client is passed in
@@ -21,7 +23,8 @@ function EditClientModal({ client, onClose, onSave }) {
                 LastName: client.lastname || '',
                 Email: client.email || '',
                 Role: client.role || 'Client',
-                ProfilePhotoURL: client.profilephotourl || '', // Initialize ProfilePhotoURL
+                ProfilePhotoPath: client.profilephotopath || '', // Initialize ProfilePhotoPath
+                ProfilePhotoHash: client.profilephotohash || '', // Initialize ProfilePhotoHash
             });
         }
         // For the fade-in effect
@@ -29,9 +32,13 @@ function EditClientModal({ client, onClose, onSave }) {
         return () => clearTimeout(timer);
     }, [client]);
 
-    const { FirstName, LastName, Email, Role, ProfilePhotoURL } = formData;
+    const { FirstName, LastName, Email, Role } = formData; // Removed ProfilePhotoURL
 
     const onChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+    const onFileChange = e => {
+        setSelectedFile(e.target.files[0]);
+    };
 
     const handleClose = () => {
         setShowModal(false);
@@ -41,12 +48,51 @@ function EditClientModal({ client, onClose, onSave }) {
 
     const handleSubmit = async e => {
         e.preventDefault();
+        setMessage('');
+
+        let profilePhotoPath = formData.ProfilePhotoPath;
+        let profilePhotoHash = formData.ProfilePhotoHash;
+
+        if (selectedFile) {
+            const fileFormData = new FormData();
+            fileFormData.append('profilePhoto', selectedFile);
+            try {
+                const uploadRes = await api.post('/upload', fileFormData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
+                profilePhotoPath = uploadRes.data.filePath;
+                profilePhotoHash = uploadRes.data.fileHash;
+                setSelectedFile(null); // Clear selected file after successful upload
+            } catch (err) {
+                console.error('Failed to upload photo:', err);
+                setMessage('Failed to upload photo. Please try again.');
+                return;
+            }
+        }
+
         try {
-            const res = await api.put(`/clients/${client.clientid}`, formData);
+            const res = await api.put(`/clients/${client.clientid}`, {
+                ...formData,
+                ProfilePhotoPath: profilePhotoPath,
+                ProfilePhotoHash: profilePhotoHash,
+            });
             onSave(res.data); // Pass updated client back to parent
         } catch (err) {
             console.error(err.response ? err.response.data : err.message);
             setMessage(err.response?.data?.message || 'Server error');
+        }
+    };
+
+    const handleDeletePhoto = async () => {
+        try {
+            await api.delete(`/clients/${client.clientid}/photo`);
+            setFormData(prev => ({ ...prev, ProfilePhotoPath: null, ProfilePhotoHash: null }));
+            // The parent component will refresh data when the modal closes.
+        } catch (err) {
+            console.error('Failed to delete photo:', err);
+            setMessage('Failed to delete photo. Please try again.');
         }
     };
 
@@ -100,13 +146,29 @@ function EditClientModal({ client, onClose, onSave }) {
                         </select>
                     </div>
                     <div className="form-group">
-                        <label>Profile Photo URL</label>
-                        <input
-                            type="text"
-                            name="ProfilePhotoURL"
-                            value={ProfilePhotoURL}
-                            onChange={onChange}
-                        />
+                        <label>Profile Photo</label>
+                        <div className="photo-controls">
+                            {formData.ProfilePhotoPath ? (
+                                <div className="profile-photo-preview">
+                                    <img src={`${process.env.REACT_APP_API_BASE_URL}${formData.ProfilePhotoPath}`} alt="Client Profile" className="current-profile-photo" />
+                                </div>
+                            ) : (
+                                <div className="profile-photo-placeholder">
+                                    {formData.FirstName ? formData.FirstName.charAt(0).toUpperCase() : '?'}
+                                </div>
+                            )}
+                            <input
+                                type="file"
+                                name="profilePhoto"
+                                onChange={onFileChange}
+                                accept="image/*"
+                            />
+                            {formData.ProfilePhotoPath && (
+                                <button type="button" className="delete-photo-button" onClick={handleDeletePhoto}>
+                                    Delete Photo
+                                </button>
+                            )}
+                        </div>
                     </div>
                     <div className="modal-footer">
                         <button type="button" onClick={handleClose} className="cancel-button">Cancel</button>

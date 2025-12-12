@@ -8,11 +8,13 @@ function EditPetModal({ pet, onClose, onPetUpdated }) {
         Breed: '',
         Age: '',
         Notes: '',
-        ProfilePhotoURL: '',
+        ProfilePhotoPath: '',
+        ProfilePhotoHash: '', // Add ProfilePhotoHash to formData state
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [showModal, setShowModal] = useState(false); // Add showModal state
+    const [selectedFile, setSelectedFile] = useState(null);
 
     useEffect(() => {
         const timer = setTimeout(() => setShowModal(true), 10); // Trigger animation
@@ -26,7 +28,8 @@ function EditPetModal({ pet, onClose, onPetUpdated }) {
                 Breed: pet.breed || '',
                 Age: pet.age || '',
                 Notes: pet.notes || '',
-                ProfilePhotoURL: pet.profilephotourl || '',
+                ProfilePhotoPath: pet.profilephotopath || '',
+                ProfilePhotoHash: pet.profilephotohash || '', // Initialize ProfilePhotoHash from pet data
             });
         }
     }, [pet]);
@@ -34,6 +37,10 @@ function EditPetModal({ pet, onClose, onPetUpdated }) {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const onFileChange = e => {
+        setSelectedFile(e.target.files[0]);
     };
 
     const handleClose = () => {
@@ -47,15 +54,49 @@ function EditPetModal({ pet, onClose, onPetUpdated }) {
         setError('');
 
         try {
+            let profilePhotoPath = formData.ProfilePhotoPath;
+            let profilePhotoHash = formData.ProfilePhotoHash; // Get current hash from state
+
+            // If a new file is selected, upload it first
+            if (selectedFile) {
+                const fileFormData = new FormData();
+                fileFormData.append('profilePhoto', selectedFile);
+                const uploadRes = await api.post('/upload', fileFormData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
+                profilePhotoPath = uploadRes.data.filePath;
+                profilePhotoHash = uploadRes.data.fileHash; // Capture the hash from the upload response
+            }
+
             const updatedPetData = {
                 ...formData,
                 Age: formData.Age ? parseInt(formData.Age, 10) : null,
                 ClientID: pet.clientid, // Keep the original ClientID
+                ProfilePhotoPath: profilePhotoPath,
+                ProfilePhotoHash: profilePhotoHash, // Include the hash in the update data
             };
             await api.put(`/pets/${pet.petid}`, updatedPetData);
             onPetUpdated();
+            handleClose(); // Close on success
         } catch (err) {
             setError('Failed to update pet. Please try again.');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeletePhoto = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            await api.delete(`/pets/${pet.petid}/photo`);
+            setFormData(prev => ({ ...prev, ProfilePhotoPath: null, ProfilePhotoHash: null })); // Clear hash on delete
+            onPetUpdated(); // Refresh parent component
+        } catch (err) {
+            setError('Failed to delete photo. Please try again.');
             console.error(err);
         } finally {
             setLoading(false);
@@ -109,13 +150,29 @@ function EditPetModal({ pet, onClose, onPetUpdated }) {
                         />
                     </div>
                     <div className="form-group">
-                        <label>Profile Photo URL</label>
-                        <input
-                            type="text"
-                            name="ProfilePhotoURL"
-                            value={formData.ProfilePhotoURL}
-                            onChange={handleChange}
-                        />
+                        <label>Profile Photo</label>
+                        <div className="photo-controls">
+                            {formData.ProfilePhotoPath ? (
+                                <div className="profile-photo-preview">
+                                    <img src={`${process.env.REACT_APP_API_BASE_URL}${formData.ProfilePhotoPath}`} alt="Pet Profile" className="current-profile-photo" />
+                                </div>
+                            ) : (
+                                <div className="profile-photo-placeholder">
+                                    {formData.Name ? formData.Name.charAt(0).toUpperCase() : '?'}
+                                </div>
+                            )}
+                            <input
+                                type="file"
+                                name="profilePhoto"
+                                onChange={onFileChange}
+                                accept="image/*"
+                            />
+                            {formData.ProfilePhotoPath && (
+                                <button type="button" className="delete-photo-button" onClick={handleDeletePhoto} disabled={loading}>
+                                    Delete Photo
+                                </button>
+                            )}
+                        </div>
                     </div>
                     {error && <p className="error-message">{error}</p>}
                     <div className="modal-footer">
