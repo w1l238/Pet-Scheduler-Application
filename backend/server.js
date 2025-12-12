@@ -1,4 +1,5 @@
 const logger = require('./logger'); // Import logger to structure the logging process to the console in the backend.
+const fs = require('fs');
 
 process.on('unhandledRejection', (reason, promise) => {
   logger.error('FATAL', 'Unhandled Rejection at:', promise, 'reason:', reason);
@@ -18,12 +19,31 @@ const express = require('express');
 const { authenticateToken, authorizeRoles } = require('./middleware/auth');
 const authRoutes = require('./routes/auth');
 const cors = require('cors');
+const multer = require('multer');
+const crypto = require('crypto'); // Import crypto module for hashing
+const path = require('path');
 
 const app = express();
 const port = 5000;
 
 app.use(express.json()); // Middleware to parse JSON bodies
 app.use(cors()); // Enable CORS for all routes
+
+// Serve uploaded files statically
+app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// --- Multer Setup for File Uploads ---
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/');
+  },
+  filename: function (req, file, cb) {
+    // Use a temporary filename for initial upload
+    cb(null, 'temp-' + Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage: storage });
 
 // --- Public Routes ---
 
@@ -55,12 +75,63 @@ app.get('/api/public/appointments/booked-times', async (req, res) => {
 
 // --- Protected Routes ---
 
+// --- File Upload Endpoint ---
+app.post('/api/upload', authenticateToken, upload.single('profilePhoto'), async (req, res) => {
+  try {
+    if (!req.file) {
+      logger.warn('UPLOAD', `Upload failed: No file provided by user ${req.user.id}.`);
+      return res.status(400).send({ message: 'No file uploaded.' });
+    }
+
+    const tempFilePath = req.file.path;
+    const fileBuffer = fs.readFileSync(tempFilePath);
+    const fileHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+
+    // Check for existing image with the same hash in Client table
+    let existingPath = null;
+    let queryResult = await pool.query('SELECT ProfilePhotoPath FROM Client WHERE ProfilePhotoHash = $1 LIMIT 1', [fileHash]);
+    if (queryResult.rows.length > 0) {
+      existingPath = queryResult.rows[0].profilephotopath;
+    } else {
+      // Check for existing image with the same hash in Pet table
+      queryResult = await pool.query('SELECT ProfilePhotoPath FROM Pet WHERE ProfilePhotoHash = $1 LIMIT 1', [fileHash]);
+      if (queryResult.rows.length > 0) {
+        existingPath = queryResult.rows[0].profilephotopath;
+      }
+    }
+
+    if (existingPath) {
+      // Duplicate found, delete the newly uploaded temporary file
+      fs.unlinkSync(tempFilePath);
+      logger.info('UPLOAD', `Duplicate file detected. Reusing existing path: ${existingPath} for hash ${fileHash}.`);
+      return res.json({ filePath: existingPath, fileHash: fileHash });
+    } else {
+      // No duplicate, save the file with a new unique name based on hash
+      const newFilename = fileHash + path.extname(req.file.originalname);
+      const newFilePath = path.join(__dirname, 'uploads', newFilename);
+      fs.renameSync(tempFilePath, newFilePath); // Move from temp to final name
+
+      const relativeFilePath = `/uploads/${newFilename}`;
+      logger.info('UPLOAD', `File ${newFilename} uploaded successfully by user ${req.user.id} with hash ${fileHash}.`);
+      return res.json({ filePath: relativeFilePath, fileHash: fileHash });
+    }
+
+  } catch (err) {
+    logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
+    // Ensure temporary file is deleted if an error occurs during processing
+    if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+    }
+		res.status(500).send('Server error');
+  }
+});
+
 // -- Client API Endpoints --
 
 // GET all clients (ADMIN ONLY)
 app.get('/api/clients', authenticateToken, authorizeRoles(['Admin']),  async (req, res) => {
 	try {
-		const { rows } = await pool.query('SELECT ClientID, FirstName, LastName, Email, PhoneNumber, Role, CreatedAt, ProfilePhotoURL FROM Client');
+		const { rows } = await pool.query('SELECT ClientID, FirstName, LastName, Email, PhoneNumber, Role, CreatedAt, ProfilePhotoPath FROM Client');
 		logger.info('CLIENT', `Retrieved all ${rows.length} clients.`);
 		res.json(rows);
 	} catch (err) {
@@ -69,7 +140,7 @@ app.get('/api/clients', authenticateToken, authorizeRoles(['Admin']),  async (re
 	}
 });
 
-// GET a single client by ID (Admin OR Client)
+// GET a single client by ID (Admin OR Client owner)
 app.get('/api/clients/:id', authenticateToken, async (req, res) => {
 	try {
 		const { id } = req.params;
@@ -78,7 +149,7 @@ app.get('/api/clients/:id', authenticateToken, async (req, res) => {
 			logger.warn('AUTH', `Access denied for user ${req.user.id} to view client ${id}.`);
 			return res.status(403).json({ message: 'Access denied' });
 		}
-		const { rows } = await pool.query('SELECT ClientID, FirstName, LastName, Email, PhoneNumber, Role, CreatedAt, ProfilePhotoURL FROM Client WHERE ClientID = $1', [id]);
+		const { rows } = await pool.query('SELECT ClientID, FirstName, LastName, Email, PhoneNumber, Role, CreatedAt, ProfilePhotoPath FROM Client WHERE ClientID = $1', [id]);
 		if (rows.length === 0) {
 			return res.status(404).json({ message: 'Client not found' });
 		}
@@ -90,7 +161,7 @@ app.get('/api/clients/:id', authenticateToken, async (req, res) => {
 	}
 });
 
-// PUT (update) a client by ID
+// PUT (update) a client by ID (Admin OR Client owner)
 app.put('/api/clients/:id', authenticateToken, async (req, res) => {
 	try {
 		const { id } = req.params;
@@ -123,13 +194,13 @@ app.put('/api/clients/:id', authenticateToken, async (req, res) => {
 		// Merge updates with current data
         const newClientData = { ...currentClient, ...updates };
 		// Sanitize and handle casing
-		const { FirstName, LastName, Email, PhoneNumber, ProfilePhotoURL } = newClientData;
+		const { FirstName, LastName, Email, PhoneNumber, ProfilePhotoPath, ProfilePhotoHash } = newClientData;
         const Role = newClientData.Role || newClientData.role; // Handle case difference
 
 
 		const { rows } = await pool.query(
-			'UPDATE Client SET FirstName = $1, LastName = $2, Email = $3, PhoneNumber = $4, Role = $5, ProfilePhotoURL = $6 WHERE ClientID = $7 RETURNING ClientID, FirstName, LastName, Email, PhoneNumber, Role, ProfilePhotoURL',
-			[FirstName, LastName, Email, PhoneNumber, Role, ProfilePhotoURL, id]
+			'UPDATE Client SET FirstName = $1, LastName = $2, Email = $3, PhoneNumber = $4, Role = $5, ProfilePhotoPath = $6, ProfilePhotoHash = $7 WHERE ClientID = $8 RETURNING ClientID, FirstName, LastName, Email, PhoneNumber, Role, ProfilePhotoPath, ProfilePhotoHash',
+			[FirstName, LastName, Email, PhoneNumber, Role, ProfilePhotoPath, ProfilePhotoHash, id]
 		);
 		
 		logger.info('CLIENT', `Client ${id} updated successfully.`);
@@ -156,13 +227,59 @@ app.delete('/api/clients/:id', authenticateToken, authorizeRoles(['Admin']), asy
 	}
 });
 
+// DELETE a client's photo by ClientID (Admin OR Client owner)
+app.delete('/api/clients/:id/photo', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const clientId = parseInt(id, 10);
+
+        // Get the client's current photo path and check ownership
+        const clientResult = await pool.query('SELECT ProfilePhotoPath FROM Client WHERE ClientID = $1', [clientId]);
+        if (clientResult.rows.length === 0) {
+            return res.status(404).json({ message: 'Client not found' });
+        }
+        const { profilephotopath } = clientResult.rows[0];
+
+        if (req.user.role !== 'Admin' && req.user.id !== clientId) {
+            logger.warn('AUTH', `Access denied for user ${req.user.id} to delete photo for client ${id}.`);
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        // If a photo path exists, attempt to delete the file
+        if (profilephotopath) {
+            // Extract just the filename from the path stored in the DB (e.g., '/uploads/filename.jpg' -> 'filename.jpg')
+            const filename = path.basename(profilephotopath);
+            const fullPath = path.join(__dirname, 'uploads', filename);
+
+            fs.unlink(fullPath, (err) => {
+                if (err) {
+                    logger.error('UPLOAD', `Failed to delete file ${fullPath}: ${err.message}`);
+                    // Don't block the database update if file deletion fails
+                } else {
+                    logger.info('UPLOAD', `File ${fullPath} deleted successfully.`);
+                }
+            });
+        }
+
+        // Update the database to set ProfilePhotoPath and ProfilePhotoHash to NULL
+        await pool.query('UPDATE Client SET ProfilePhotoPath = NULL, ProfilePhotoHash = NULL WHERE ClientID = $1', [clientId]);
+        logger.info('CLIENT', `Profile photo for client ${id} removed from database.`);
+        res.json({ message: 'Profile photo deleted successfully' });
+
+    } catch (err) {
+        logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
+        res.status(500).send('Server error');
+    }
+});
+
+
 // -- Pet API Endpoints --
 
 // GET all pets (ADMIN ONLY)
 app.get('/api/pets', authenticateToken, authorizeRoles(['Admin']), async (req, res) => {
 	try {
 		const { rows } = await pool.query(`
-            SELECT p.*, c.FirstName, c.LastName
+            SELECT p.PetID, p.ClientID, p.Name, p.Breed, p.Age, p.Notes, p.ProfilePhotoPath, p.CreatedAt, c.FirstName, c.LastName
             FROM Pet p
             JOIN Client c ON p.ClientID = c.ClientID
             ORDER BY p.PetID ASC
@@ -179,7 +296,7 @@ app.get('/api/pets', authenticateToken, authorizeRoles(['Admin']), async (req, r
 app.get('/api/pets/:id', authenticateToken, async (req, res) => {
 	try {
 		const { id } = req.params;
-		const { rows } = await pool.query('SELECT * FROM Pet WHERE PetID = $1', [id]);
+		const { rows } = await pool.query('SELECT PetID, ClientID, Name, Breed, Age, Notes, ProfilePhotoPath, CreatedAt FROM Pet WHERE PetID = $1', [id]);
 		if (rows.length === 0) {
 			return res.status(404).json({ message: 'Pet not found' });
 		}
@@ -196,7 +313,7 @@ app.get('/api/pets/:id', authenticateToken, async (req, res) => {
 	}
 });
 
-// GET all pets for a specific client (Admin OR client)
+// GET all pets for a specific client (Admin OR client owner)
 app.get('/api/clients/:clientId/pets', authenticateToken, async (req, res) => {
 	try {
 		const { clientId } = req.params;
@@ -204,7 +321,7 @@ app.get('/api/clients/:clientId/pets', authenticateToken, async (req, res) => {
 			logger.warn('AUTH', `Access denied for user ${req.user.id} to view pets for client ${clientId}.`);
 			return res.status(403).json({ message: 'Access denied' });
 		}
-		const { rows } = await pool.query('SELECT * FROM Pet WHERE ClientID = $1 ORDER BY PetID ASC', [clientId]);
+		const { rows } = await pool.query('SELECT PetID, ClientID, Name, Breed, Age, Notes, ProfilePhotoPath, CreatedAt FROM Pet WHERE ClientID = $1 ORDER BY PetID ASC', [clientId]);
 		logger.info('PET', `Retrieved ${rows.length} pets for client ${clientId}.`);
 		res.json(rows);
 	} catch (err) {
@@ -216,15 +333,15 @@ app.get('/api/clients/:clientId/pets', authenticateToken, async (req, res) => {
 // POST a new pet (Authenicated users for their own client ID)
 app.post('/api/pets', authenticateToken, async (req, res) => {
 	try {
-		const { ClientID, Name, Breed, Age, Notes, ProfilePhotoURL } = req.body;
+		const { ClientID, Name, Breed, Age, Notes, ProfilePhotoPath } = req.body;
 		// Ensure users can only add pets to their own profile
 		if (req.user.id !== ClientID) {
 			logger.warn('AUTH', `User ${req.user.id} failed to add pet for client ${ClientID}.`);
 			return res.status(403).json({ message: 'Access denied: You can only add pets to your own profile.' });
 		}
 		const { rows } = await pool.query (
-			'INSERT INTO Pet (ClientID, Name, Breed, Age, Notes, ProfilePhotoURL) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-			[ClientID, Name, Breed, Age, Notes, ProfilePhotoURL]
+			'INSERT INTO Pet (ClientID, Name, Breed, Age, Notes, ProfilePhotoPath) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+			[ClientID, Name, Breed, Age, Notes, ProfilePhotoPath]
 		);
 		logger.info('PET', `New pet '${Name}' (ID: ${rows[0].petid}) created for client ${ClientID}.`);
 		res.status(201).json(rows[0]);
@@ -237,8 +354,9 @@ app.post('/api/pets', authenticateToken, async (req, res) => {
 // PUT (update) a pet by ID (Admin OR pet owner)
 app.put('/api/pets/:id', authenticateToken, async (req, res) => {
 	try {
-		const { id } = req.params;
-		const { ClientID, Name, Breed, Age, Notes, ProfilePhotoURL } = req.body;
+		const { id: petIdStr } = req.params;
+		const id = parseInt(petIdStr, 10);
+		const { ClientID, Name, Breed, Age, Notes, ProfilePhotoPath, ProfilePhotoHash } = req.body;
 
 		// Get the pet to check ownership
 		const petResult = await pool.query('SELECT ClientID FROM Pet WHERE PetID = $1', [id]);
@@ -251,8 +369,8 @@ app.put('/api/pets/:id', authenticateToken, async (req, res) => {
 		}
 
 		const { rows } = await pool.query(
-			'UPDATE Pet SET ClientID = $1, Name = $2, Breed = $3, Age = $4, Notes = $5, ProfilePhotoURL = $6 WHERE PetID = $7 RETURNING *',
-			[ClientID, Name, Breed, Age, Notes, ProfilePhotoURL, id]
+			'UPDATE Pet SET ClientID = $1, Name = $2, Breed = $3, Age = $4, Notes = $5, ProfilePhotoPath = $6, ProfilePhotoHash = $7 WHERE PetID = $8 RETURNING *',
+			[ClientID, Name, Breed, Age, Notes, ProfilePhotoPath, ProfilePhotoHash, id]
 		);
 		logger.info('PET', `Pet ${id} updated successfully.`);
 		res.json(rows[0]);
@@ -287,6 +405,52 @@ app.delete('/api/pets/:id', authenticateToken , async (req, res) => {
 		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
+});
+
+
+// DELETE a pet's photo by PetID (Admin OR pet owner)
+app.delete('/api/pets/:id/photo', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const petId = parseInt(id, 10);
+
+        // Get the pet's current photo path and check ownership
+        const petResult = await pool.query('SELECT ClientID, ProfilePhotoPath FROM Pet WHERE PetID = $1', [petId]);
+        if (petResult.rows.length === 0) {
+            return res.status(404).json({ message: 'Pet not found' });
+        }
+        const { clientid, profilephotopath } = petResult.rows[0];
+
+        if (req.user.role !== 'Admin' && req.user.id !== clientid) {
+            logger.warn('AUTH', `Access denied for user ${req.user.id} to delete photo for pet ${id}.`);
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        // If a photo path exists, attempt to delete the file
+        if (profilephotopath) {
+            // Extract just the filename from the path stored in the DB (e.g., '/uploads/filename.jpg' -> 'filename.jpg')
+            const filename = path.basename(profilephotopath);
+            const fullPath = path.join(__dirname, 'uploads', filename);
+
+            fs.unlink(fullPath, (err) => {
+                if (err) {
+                    logger.error('UPLOAD', `Failed to delete file ${fullPath}: ${err.message}`);
+                    // Don't block the database update if file deletion fails
+                } else {
+                    logger.info('UPLOAD', `File ${fullPath} deleted successfully.`);
+                }
+            });
+        }
+
+        // Update the database to set ProfilePhotoPath to NULL
+        await pool.query('UPDATE Pet SET ProfilePhotoPath = NULL WHERE PetID = $1', [petId]);
+        logger.info('PET', `Profile photo for pet ${id} removed from database.`);
+        res.json({ message: 'Profile photo deleted successfully' });
+
+    } catch (err) {
+        logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
+        res.status(500).send('Server error');
+    }
 });
 
 
@@ -554,7 +718,7 @@ app.delete('/api/appointments/:id', authenticateToken, async (req, res) => {
 });
 
 
-// --- Service API Endpoints --- (ADMIN ONLY)
+// --- Service API Endpoints ---
 
 // GET all active services
 app.get('/api/services', authenticateToken, async (req, res) => {
