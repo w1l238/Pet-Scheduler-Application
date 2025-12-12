@@ -163,7 +163,13 @@ function AllClients() {
                 <div className="dashboard-card pinned-admin-card" onClick={() => navigate('/admin/profile')} style={{ cursor: 'pointer' }}>
                     <h2>Your Account</h2>
                     <div className="pinned-admin-details"> {/* New container for layout */}
-                        <img src={currentAdminClient.profilephotourl || 'https://via.placeholder.com/50'} alt={`${currentAdminClient.firstname}'s profile`} className="item-photo" />
+                        {currentAdminClient.profilephotopath ? (
+                            <img src={`${process.env.REACT_APP_API_BASE_URL}${currentAdminClient.profilephotopath}`} alt={`${currentAdminClient.firstname}'s profile`} className="item-photo" />
+                        ) : (
+                            <div className="profile-photo-placeholder item-photo">
+                                {currentAdminClient.firstname ? currentAdminClient.firstname.charAt(0).toUpperCase() : '?'}
+                            </div>
+                        )}
                         <div className="pinned-admin-text-details">
                             <strong>{currentAdminClient.firstname} {currentAdminClient.lastname}</strong> <br />
                             <span>{currentAdminClient.email}</span> <br />
@@ -194,7 +200,13 @@ function AllClients() {
                 <ul className="dashboard-list">
                     {filteredAndSortedClients.map(client => (
                         <li key={client.clientid} className="dashboard-list-item">
-                            <img src={client.profilephotourl || 'https://via.placeholder.com/50'} alt={`${client.firstname}'s profile`} className="item-photo" />
+                            {client.profilephotopath ? (
+                                <img src={`${process.env.REACT_APP_API_BASE_URL}${client.profilephotopath}`} alt={`${client.firstname}'s profile`} className="item-photo" />
+                            ) : (
+                                <div className="profile-photo-placeholder item-photo">
+                                    {client.firstname ? client.firstname.charAt(0).toUpperCase() : '?'}
+                                </div>
+                            )}
                             <div className="item-details">
                                 <strong>Name:</strong> {client.firstname} {client.lastname} <br />
                                 <strong>Email:</strong> {client.email} <br />
