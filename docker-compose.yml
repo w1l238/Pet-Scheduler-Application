@@ -9,9 +9,12 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./backend/schema.sql:/docker-entrypoint-initdb.d/schema.sql
-    ports:
-      - "5433:5432"
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d pet_scheduler_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   backend:
     build: ./backend
@@ -26,11 +29,15 @@ services:
     ports:
       - "5000:5000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: always
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        - REACT_APP_DOCS_URL=http://localhost:3000
     container_name: pet_scheduler_frontend
     environment:
       REACT_APP_API_BASE_URL: http://backend:5000/api
