@@ -63,9 +63,9 @@
     color: #333;
 }
 
-.business-profile-modal .modal-body {
+/* .business-profile-modal .modal-body { */
     /* No specific styles needed here if form groups handle spacing */
-}
+/* } */
 
 .business-profile-modal .modal-footer {
     display: flex;

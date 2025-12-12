@@ -131,3 +131,18 @@
     color: #007bff;
     margin: 0;
 }
+
+.profile-photo-placeholder.profile-photo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #e0e0e0;
+    color: #343a40;
+    font-size: 3rem; /* Adjust as needed for visual balance */
+    font-weight: bold;
+    border-radius: 50%;
+    width: 120px; /* Consistent with .profile-photo */
+    height: 120px; /* Consistent with .profile-photo */
+    border: 4px solid #fff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}

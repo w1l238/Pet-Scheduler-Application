@@ -127,8 +127,8 @@
 }
 
 .pet-card-photo {
-    width: 100px;
-    height: 100px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     object-fit: cover;
     margin: 0 auto 1rem auto;
@@ -139,4 +139,33 @@
     font-size: 1.2rem;
     font-weight: bold;
     color: #495057;
+}
+
+/* Styles for profile photo placeholder */
+.profile-photo-placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #e0e0e0; /* Light gray background */
+    color: #343a40; /* Primary color for text */
+    font-size: 3rem; /* Large font size for initial */
+    font-weight: bold;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #fff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Specific sizes for different contexts */
+.profile-card-header .profile-photo-placeholder {
+    width: 120px;
+    height: 120px;
+}
+
+.pet-card .profile-photo-placeholder {
+    width: 50px;
+    height: 50px;
+    margin: 0 auto 1rem auto;
+    border: 3px solid #f8f9fa;
+    font-size: 1.5rem; /* Smaller font for pet cards */
 }

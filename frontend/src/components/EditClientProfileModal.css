@@ -63,9 +63,9 @@
     color: #333;
 }
 
-.client-profile-modal .modal-body {
+/* .client-profile-modal .modal-body { */
     /* No specific styles needed here if form groups handle spacing */
-}
+/* } */
 
 .client-profile-modal .modal-footer {
     display: flex;
@@ -123,4 +123,57 @@
     font-family: inherit;
     font-size: 1rem;
     box-sizing: border-box;
+}
+
+/* New styles for profile photo upload */
+.client-profile-modal .photo-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.client-profile-modal .profile-photo-preview {
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.client-profile-modal .profile-photo-preview .current-profile-photo {
+    max-width: 150px;
+    max-height: 150px;
+    border-radius: 1rem;
+    object-fit: cover;
+    border: 1px solid #eee;
+}
+
+.client-profile-modal .profile-photo-placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #e0e0e0;
+    color: #6a11cb;
+    font-size: 3rem;
+    font-weight: bold;
+    border-radius: 1rem; /* Use 8px for consistency with image */
+    width: 150px;
+    height: 150px;
+    margin-bottom: 1rem;
+    border: 1px solid #eee;
+}
+
+.client-profile-modal .delete-photo-button {
+    background: linear-gradient(to right, #6a11cb, #2575fc);
+    color: white;
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 1rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    width:30%;
+}
+
+.client-profile-modal .delete-photo-button:hover {
+    opacity: 0.9;
 }

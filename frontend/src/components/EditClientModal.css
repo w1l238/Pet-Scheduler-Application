@@ -22,7 +22,7 @@
 .modal-content {
     background: white;
     padding: 2rem;
-    border-radius: 8px;
+    border-radius: 1rem;
     width: 90%;
     max-width: 500px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
@@ -68,7 +68,7 @@
 .cancel-button, .save-button {
     padding: 0.6rem 1.2rem;
     border: none;
-    border-radius: 4px;
+    border-radius: 1rem;
     font-size: 1rem;
     font-weight: bold;
     cursor: pointer;
@@ -90,5 +90,58 @@
 }
 
 .save-button:hover {
+    opacity: 0.9;
+}
+
+/* New styles for profile photo upload */
+.modal-content .photo-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.modal-content .profile-photo-preview {
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.modal-content .profile-photo-preview .current-profile-photo {
+    max-width: 150px;
+    max-height: 150px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid #eee;
+}
+
+.modal-content .profile-photo-placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #e0e0e0;
+    color: #6a11cb;
+    font-size: 3rem;
+    font-weight: bold;
+    border-radius: 1rem;
+    width: 150px;
+    height: 150px;
+    margin-bottom: 1rem;
+    border: 1px solid #eee;
+}
+
+.modal-content .delete-photo-button {
+    background: linear-gradient(to right, #6a11cb, #2575fc);
+    color: white;
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 1rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    width:30%;
+}
+
+.modal-content .delete-photo-button:hover {
     opacity: 0.9;
 }

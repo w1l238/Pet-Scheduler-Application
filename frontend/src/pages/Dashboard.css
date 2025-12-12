@@ -162,6 +162,7 @@ input:checked + .slider:before {
     width: 60px; /* Slightly larger photo for the pinned card */
     height: 60px;
     flex-shrink: 0; /* Prevent photo from shrinking */
+    font-size: 2rem;
 }
 
 .pinned-admin-text-details {
