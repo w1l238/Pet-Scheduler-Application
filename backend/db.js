@@ -14,12 +14,10 @@ if (process.env.DATABASE_URL) {
         user: process.env.DB_USER,
         host: process.env.DB_HOST,
         database: process.env.DB_DATABASE,
+        // Explicitly set password to undefined if it's empty, which pg handles as "no password"
+        password: (process.env.DB_PASSWORD && process.env.DB_PASSWORD.trim() !== '') ? process.env.DB_PASSWORD : undefined,
         port: process.env.DB_PORT,
     };
-    // Only add password if it's not an empty string
-    if (process.env.DB_PASSWORD && process.env.DB_PASSWORD !== '') {
-        poolConfig.password = process.env.DB_PASSWORD;
-    }
 }
 
 const pool = new Pool(poolConfig);
