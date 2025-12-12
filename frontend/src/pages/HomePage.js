@@ -24,6 +24,7 @@ function HomePage() {
                 <div className="hero-buttons">
                     <Link to="/login" className="btn">Login</Link>
                     <Link to="/register" className="btn">Register</Link>
+                    <div style={{ paddingTop: '3rem' }}><a href={process.env.REACT_APP_DOCS_URL} target="_blank" rel="noopener noreferrer" className="btn">Documentation</a></div>
                 </div>
             </header>
 
@@ -38,7 +39,7 @@ function HomePage() {
                 </div>
                 <div className="feature-card">
                     <h3>Automated Reminders</h3>
-                    <p>Reduce no-shows with automated SMS and email reminders for appointments.</p>
+                    <p>Reduce no-shows with automated email reminders for appointments.</p>
                 </div>
             </section>
         </div>
