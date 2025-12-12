@@ -1,3 +1,13 @@
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  process.exit(1);
+});
+
 const { sendEmail } = require('./emailService')
 require('dotenv').config();
 const pool = require('./db');
@@ -907,6 +917,17 @@ app.post('/api/reminders/send', async (req, res) => {
 	}
 });
 
-app.listen(port, () => {
-	console.log(`Backend server listening at http://localhost:${port}`);
-});
+// --- Start Server ---
+// Wrap server startup in a database connection check
+pool.connect()
+  .then(client => {
+    console.log('Database connected successfully!');
+    client.release(); // Release the client back to the pool
+    app.listen(port, () => {
+      console.log(`Backend server listening at http://localhost:${port}`);
+    });
+  })
+  .catch(err => {
+    console.error('FATAL: Failed to connect to the database.', err);
+    process.exit(1);
+  });
