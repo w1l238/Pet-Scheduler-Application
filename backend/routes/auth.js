@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const pool = require('../db');
 const jwt = require('jsonwebtoken');
+const logger = require('../logger');
 
 const router = express.Router(); // Create an Express router to manage authentication routes
 
@@ -13,6 +14,7 @@ router.post('/register', async (req, res) => {
 		// Check if user already exists
 		const userExists = await pool.query('SELECT * FROM Client WHERE Email = $1', [Email]);
 		if (userExists.rows.length > 0) {
+			logger.warn('AUTH', `Registration failed: Email ${Email} already exists.`);
 			return res.status(400).json({ message: 'User with this email already exists.' });
 		}
 
@@ -26,12 +28,13 @@ router.post('/register', async (req, res) => {
 			[FirstName, LastName, Email, PhoneNumber, passwordHash, 'Client']
 		);
 		
+		logger.info('AUTH', `New user registered: ${Email} (ID: ${rows[0].clientid})`);
 		res.status(201).json({
 			message: 'User registrered successfully',
 			user: rows[0],
 		});
 	} catch (err) {
-		console.error(err.message);
+		logger.error('AUTH', `Error during registration: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -44,6 +47,7 @@ router.post('/login', async (req, res) => {
 		// Check if user exists
 		const { rows } = await pool.query('SELECT * FROM Client WHERE Email = $1', [Email]);
 		if (rows.length === 0) {
+			logger.warn('AUTH', `Login failed: No user found for email ${Email}.`);
 			return res.status(401).json({ message: 'Invalid credentials' });
 		}
 
@@ -52,6 +56,7 @@ router.post('/login', async (req, res) => {
 		// Check password
 		const isMatch = await bcrypt.compare(Password, user.passwordhash);
 		if (!isMatch) {
+			logger.warn('AUTH', `Login failed: Password mismatch for user ${Email}.`);
 			return res.status(401).json({ message: 'Invalid credentials' });
 		}
 
@@ -68,12 +73,16 @@ router.post('/login', async (req, res) => {
 			process.env.JWT_SECRET,
 			{ expiresIn: '1h' },
 			(err, token) => {
-				if (err) throw err;
+				if (err) {
+                    logger.error('AUTH', `Error signing JWT for user ${Email}: ${err.message}`);
+                    throw err;
+                };
+				logger.info('AUTH', `Login successful, token created for ${Email}.`);
 				res.json({ token });
 			}
 		);
 	} catch (err) {
-		console.error(err.message);
+		logger.error('AUTH', `Error during login: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });

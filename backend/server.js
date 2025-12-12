@@ -1,10 +1,12 @@
+const logger = require('./logger'); // Import logger to structure the logging process to the console in the backend.
+
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  logger.error('FATAL', 'Unhandled Rejection at:', promise, 'reason:', reason);
   process.exit(1);
 });
 
 process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
+  logger.error('FATAL', 'Uncaught Exception:', error);
   process.exit(1);
 });
 
@@ -46,7 +48,7 @@ app.get('/api/public/appointments/booked-times', async (req, res) => {
         `);
         res.json(rows);
     } catch (err) {
-        console.error('Error fetching booked times:', err.message);
+        logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
         res.status(500).send('Server error');
     }
 });
@@ -59,9 +61,10 @@ app.get('/api/public/appointments/booked-times', async (req, res) => {
 app.get('/api/clients', authenticateToken, authorizeRoles(['Admin']),  async (req, res) => {
 	try {
 		const { rows } = await pool.query('SELECT ClientID, FirstName, LastName, Email, PhoneNumber, Role, CreatedAt, ProfilePhotoURL FROM Client');
+		logger.info('CLIENT', `Retrieved all ${rows.length} clients.`);
 		res.json(rows);
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -72,15 +75,17 @@ app.get('/api/clients/:id', authenticateToken, async (req, res) => {
 		const { id } = req.params;
 		// Check if the authenticated user is an Admin or is requesting their own info
 		if (req.user.role !== 'Admin' && req.user.id !== parseInt(id, 10)) {
+			logger.warn('AUTH', `Access denied for user ${req.user.id} to view client ${id}.`);
 			return res.status(403).json({ message: 'Access denied' });
 		}
 		const { rows } = await pool.query('SELECT ClientID, FirstName, LastName, Email, PhoneNumber, Role, CreatedAt, ProfilePhotoURL FROM Client WHERE ClientID = $1', [id]);
 		if (rows.length === 0) {
 			return res.status(404).json({ message: 'Client not found' });
 		}
+		logger.info('CLIENT', `Retrieved client ${id}.`);
 		res.json(rows[0]);
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -93,6 +98,7 @@ app.put('/api/clients/:id', authenticateToken, async (req, res) => {
 
         // Authorization: Allow admin or the user themselves
         if (req.user.role !== 'Admin' && req.user.id !== parseInt(id, 10)) {
+            logger.warn('AUTH', `Access denied for user ${req.user.id} to update client ${id}.`);
             return res.status(403).json({ message: 'Access denied' });
         }
 
@@ -103,6 +109,7 @@ app.put('/api/clients/:id', authenticateToken, async (req, res) => {
 
         // Prevent admin from changing their own role to non-admin
         if (req.user.role === 'Admin' && req.user.id === parseInt(id, 10) && updates.Role && updates.Role !== 'Admin') {
+            logger.warn('AUTH', `Admin user ${req.user.id} attempted to change their own role.`);
             return res.status(400).json({ message: 'Admins cannot change their own role.' });
         }
 
@@ -125,9 +132,10 @@ app.put('/api/clients/:id', authenticateToken, async (req, res) => {
 			[FirstName, LastName, Email, PhoneNumber, Role, ProfilePhotoURL, id]
 		);
 		
+		logger.info('CLIENT', `Client ${id} updated successfully.`);
 		res.json(rows[0]);
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -140,9 +148,10 @@ app.delete('/api/clients/:id', authenticateToken, authorizeRoles(['Admin']), asy
 		if (rowCount === 0) {
 			return res.status(404).json({ message: 'Client not found' });
 		}
+		logger.info('CLIENT', `Client ${id} deleted successfully by admin ${req.user.id}.`);
 		res.json({ message: 'Client deleted successfully' });
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -158,9 +167,10 @@ app.get('/api/pets', authenticateToken, authorizeRoles(['Admin']), async (req, r
             JOIN Client c ON p.ClientID = c.ClientID
             ORDER BY p.PetID ASC
         `);
+		logger.info('PET', `Retrieved all ${rows.length} pets.`);
 		res.json(rows);
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -175,11 +185,13 @@ app.get('/api/pets/:id', authenticateToken, async (req, res) => {
 		}
 		// Check if the authenticated user is an Admin or the pet's owner
 		if (req.user.role !== 'Admin' && req.user.id !== rows[0].clientid) {
+			logger.warn('AUTH', `Access denied for user ${req.user.id} to view pet ${id}.`);
 			return res.status(403).json({ message: 'Access denied' });
 		}
+		logger.info('PET', `Retrieved pet ${id}.`);
 		res.json(rows[0]);
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -189,12 +201,14 @@ app.get('/api/clients/:clientId/pets', authenticateToken, async (req, res) => {
 	try {
 		const { clientId } = req.params;
 		if (req.user.role !== 'Admin' && req.user.id !== parseInt(clientId, 10)) {
+			logger.warn('AUTH', `Access denied for user ${req.user.id} to view pets for client ${clientId}.`);
 			return res.status(403).json({ message: 'Access denied' });
 		}
 		const { rows } = await pool.query('SELECT * FROM Pet WHERE ClientID = $1 ORDER BY PetID ASC', [clientId]);
+		logger.info('PET', `Retrieved ${rows.length} pets for client ${clientId}.`);
 		res.json(rows);
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -202,19 +216,20 @@ app.get('/api/clients/:clientId/pets', authenticateToken, async (req, res) => {
 // POST a new pet (Authenicated users for their own client ID)
 app.post('/api/pets', authenticateToken, async (req, res) => {
 	try {
-		console.log('Received pet data:', req.body);
 		const { ClientID, Name, Breed, Age, Notes, ProfilePhotoURL } = req.body;
 		// Ensure users can only add pets to their own profile
 		if (req.user.id !== ClientID) {
+			logger.warn('AUTH', `User ${req.user.id} failed to add pet for client ${ClientID}.`);
 			return res.status(403).json({ message: 'Access denied: You can only add pets to your own profile.' });
 		}
 		const { rows } = await pool.query (
 			'INSERT INTO Pet (ClientID, Name, Breed, Age, Notes, ProfilePhotoURL) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
 			[ClientID, Name, Breed, Age, Notes, ProfilePhotoURL]
 		);
+		logger.info('PET', `New pet '${Name}' (ID: ${rows[0].petid}) created for client ${ClientID}.`);
 		res.status(201).json(rows[0]);
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -231,6 +246,7 @@ app.put('/api/pets/:id', authenticateToken, async (req, res) => {
 			return res.status(404).json({ message: 'Pet not found' });
 		}
 		if (req.user.role !== 'Admin' && req.user.id !== petResult.rows[0].clientid) {
+			logger.warn('AUTH', `Access denied for user ${req.user.id} to update pet ${id}.`);
 			return res.status(403).json({ message: 'Access denied' });
 		}
 
@@ -238,9 +254,10 @@ app.put('/api/pets/:id', authenticateToken, async (req, res) => {
 			'UPDATE Pet SET ClientID = $1, Name = $2, Breed = $3, Age = $4, Notes = $5, ProfilePhotoURL = $6 WHERE PetID = $7 RETURNING *',
 			[ClientID, Name, Breed, Age, Notes, ProfilePhotoURL, id]
 		);
+		logger.info('PET', `Pet ${id} updated successfully.`);
 		res.json(rows[0]);
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -256,6 +273,7 @@ app.delete('/api/pets/:id', authenticateToken , async (req, res) => {
 			return res.status(404).json({ message: 'Pet not found' });
 		}
 		if (req.user.role !== 'Admin' && req.user.id !== petResult.rows[0].clientid) {
+			logger.warn('AUTH', `Access denied for user ${req.user.id} to delete pet ${id}.`);
 			return res.status(403).json({ message: 'Access denied' });
 		}
 
@@ -263,9 +281,10 @@ app.delete('/api/pets/:id', authenticateToken , async (req, res) => {
 		if (rowCount === 0) {
 			return res.status(404).json({ message: 'Pet not found' });
 		}
+		logger.info('PET', `Pet ${id} deleted successfully.`);
 		res.json({ message: 'Pet deleted successfully' });
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -294,9 +313,10 @@ app.get('/api/appointments', authenticateToken, authorizeRoles(['Admin']), async
         query += ' ORDER BY a.AppointmentID ASC';
 
 		const { rows } = await pool.query(query, params);
+		logger.info('APPOINTMENT', `Retrieved ${rows.length} appointments.`);
 		res.json(rows);
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -318,11 +338,13 @@ app.get('/api/appointments/:id', authenticateToken, async (req, res) => {
 			return res.status(404).json({ message: 'Appointment not found' });
 		}
 		if (req.user.role !== 'Admin' && req.user.id !== rows[0].clientid) {
+			logger.warn('AUTH', `Access denied for user ${req.user.id} to view appointment ${id}.`);
 			return res.status(403).json({ message: 'Access denied' });
 		}
+		logger.info('APPOINTMENT', `Retrieved appointment ${id}.`);
 		res.json(rows[0]);
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -332,6 +354,7 @@ app.get('/api/clients/:clientId/appointments', authenticateToken, async (req, re
 	try {
 		const { clientId } = req.params;
 		if (req.user.role !== 'Admin' && req.user.id !== parseInt(clientId, 10)) { 
+			logger.warn('AUTH', `Access denied for user ${req.user.id} to view appointments for client ${clientId}.`);
 			return res.status(403).json({ message: 'Access denied' });
 		}
 		const query = `
@@ -343,9 +366,10 @@ app.get('/api/clients/:clientId/appointments', authenticateToken, async (req, re
             ORDER BY a.AppointmentID ASC
         `;
 		const { rows } = await pool.query(query, [clientId]);
+		logger.info('APPOINTMENT', `Retrieved ${rows.length} appointments for client ${clientId}.`);
 		res.json(rows);
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -355,6 +379,7 @@ app.post('/api/appointments', authenticateToken, async (req, res) => {
 	try {
 		const { ClientID, PetID, ServiceID, AppointmentTime, Status, Notes } = req.body;
 		if (req.user.role !== 'Admin' && req.user.id !== ClientID) {
+			logger.warn('AUTH', `User ${req.user.id} failed to create appointment for client ${ClientID}.`);
 			return res.status(403).json({ message: 'Access denied: You can only create appointments for yourself.' });
 		}
 
@@ -379,6 +404,7 @@ app.post('/api/appointments', authenticateToken, async (req, res) => {
         const conflictCheck = await pool.query(conflictCheckQuery, [AppointmentTime, durationInterval]);
 
         if (conflictCheck.rows.length > 0) {
+			logger.warn('APPOINTMENT', `Double booking prevented for time slot ${AppointmentTime}.`);
             return res.status(409).json({ message: 'This time slot is already booked. Please choose a different time.' });
         }
         // --- END: Double Booking Prevention ---
@@ -393,6 +419,7 @@ app.post('/api/appointments', authenticateToken, async (req, res) => {
 			const noticeMilliseconds = minNoticeHours * 60 * 60 * 1000;
 
 			if (appointmentTime.getTime() - now.getTime() < noticeMilliseconds) {
+				logger.warn('APPOINTMENT', `Booking failed for user ${req.user.id} due to minimum notice period.`);
 				return res.status(400).json({ message: `Booking failed: Appointments must be made at least ${minNoticeHours} hours in advance.` });
 			}
 		}
@@ -401,9 +428,10 @@ app.post('/api/appointments', authenticateToken, async (req, res) => {
 			'INSERT INTO Appointment (ClientID, PetID, ServiceID, AppointmentTime, Status, Notes) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
 			[ClientID, PetID, ServiceID, AppointmentTime, Status, Notes]
 		);
+		logger.info('APPOINTMENT', `New appointment (ID: ${rows[0].appointmentid}) created for client ${ClientID}.`);
 		res.status(201).json(rows[0]);
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -417,11 +445,12 @@ app.put('/api/appointments/:id', authenticateToken, async (req, res) => {
 		// Use lowercase keys to match the data sent from the frontend
 		const { clientid, petid, serviceid, appointmenttime, status, notes } = req.body;
 
-		const aptResult = await pool.query('SELECT ClientID FROM Appointment WHERE AppointmentID = $1', [appointmentId]);
+		const aptResult = await pool.query('SELECT ClientID, Status FROM Appointment WHERE AppointmentID = $1', [appointmentId]);
 		if (aptResult.rows.length === 0) {
 			return res.status(404).json({ message: 'Appointment not found' });
 		}
 		if (req.user.role !== 'Admin' && req.user.id !== aptResult.rows[0].clientid) {
+			logger.warn('AUTH', `Access denied for user ${req.user.id} to update appointment ${id}.`);
 			return res.status(403).json({ message: 'Access denied' });
 		}
 
@@ -429,6 +458,7 @@ app.put('/api/appointments/:id', authenticateToken, async (req, res) => {
 			'UPDATE Appointment SET ClientID = $1, PetID = $2, ServiceID = $3, AppointmentTime = $4, Status = $5, Notes = $6 WHERE AppointmentID = $7 RETURNING *',
 			[clientid, petid, serviceid, appointmenttime, status, notes, appointmentId]
 		);
+		logger.info('APPOINTMENT', `Appointment ${id} updated to status '${status}'.`);
 
 		// If the status has changed, create a notification for the client
 		if (req.user.role === 'Admin' && status && status !== aptResult.rows[0].status) {
@@ -441,9 +471,8 @@ app.put('/api/appointments/:id', authenticateToken, async (req, res) => {
 				'INSERT INTO Notification (ClientID, Message, Link) VALUES ($1, $2, $3)',
 				[clientid, message, '/client/appointments']
 			);
+			logger.info('NOTIFICATION', `Created notification for client ${clientid} about appointment ${id} status change.`);
 		}
-
-		console.log('Status is:', status);
 
 		// If the appointment is marked as 'Completed', automatically create an invoice
 		if (status === 'Completed') {
@@ -465,13 +494,14 @@ app.put('/api/appointments/:id', authenticateToken, async (req, res) => {
 
 					// Create the invoice
 					await pool.query(queryText, queryParams);
+					logger.info('INVOICE', `Invoice created for completed appointment ${id}.`);
 				}
 			}
 		}
 
 		res.json(rows[0]);
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -486,6 +516,7 @@ app.delete('/api/appointments/:id', authenticateToken, async (req, res) => {
 			return res.status(404).json({ message: 'Appointment not found' });
 		}
 		if (req.user.role !== 'Admin' && req.user.id !== aptResult.rows[0].clientid) {
+			logger.warn('AUTH', `Access denied for user ${req.user.id} to delete appointment ${id}.`);
 			return res.status(403).json({ message: 'Access denied' });
 		}
 
@@ -493,9 +524,10 @@ app.delete('/api/appointments/:id', authenticateToken, async (req, res) => {
 		if (rowCount === 0) {
 			return res.status(404).json({ message: 'Appointment not found' });
 		}
+		logger.info('APPOINTMENT', `Appointment ${id} deleted successfully.`);
 		res.json({ message: 'Appointment deleted successfully' });
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -507,9 +539,10 @@ app.delete('/api/appointments/:id', authenticateToken, async (req, res) => {
 app.get('/api/services', authenticateToken, async (req, res) => {
 	try {
 		const { rows } = await pool.query('SELECT * FROM Service WHERE IsActive = true ORDER BY ServiceID ASC');
+		logger.info('SERVICE', `Retrieved ${rows.length} active services.`);
 		res.json(rows);
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -529,7 +562,7 @@ app.get('/api/services/stats', authenticateToken, authorizeRoles(['Admin']), asy
         }, {});
         res.json(statsMap);
     } catch (err) {
-        console.error(err.message);
+        logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
         res.status(500).send('Server error');
     }
 });
@@ -542,9 +575,10 @@ app.get('/api/services/:id', authenticateToken, async (req, res) => {
 		if (rows.length === 0) {
 			return res.status(404).json({ message: 'Service not found' });
 		}
+		logger.info('SERVICE', `Retrieved service ${id}.`);
 		res.json(rows[0]);
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -557,9 +591,10 @@ app.post('/api/services', authenticateToken, authorizeRoles(['Admin']), async (r
 			'INSERT INTO Service (Name, Description, Price, DurationMinutes) VALUES ($1, $2, $3, $4) RETURNING *',
 			[Name, Description, Price, DurationMinutes]
 		);
+		logger.info('SERVICE', `New service '${Name}' (ID: ${rows[0].serviceid}) created.`);
 		res.status(201).json(rows[0]);
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -576,9 +611,10 @@ app.put('/api/services/:id', authenticateToken, authorizeRoles(['Admin']), async
 		if (rows.length === 0) {
 			return res.status(404).json({ message: 'Service not found' });
 		}
+		logger.info('SERVICE', `Service ${id} updated successfully.`);
 		res.json(rows[0]);
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -591,9 +627,10 @@ app.delete('/api/services/:id', authenticateToken, authorizeRoles(['Admin']), as
 		if (rowCount === 0) {
 			return res.status(404).json({ message: 'Service not found' });
 		}
+		logger.info('SERVICE', `Service ${id} archived successfully.`);
 		res.json({ message: 'Service archived successfully' });
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -616,9 +653,10 @@ app.get('/api/invoices', authenticateToken, authorizeRoles(['Admin']), async (re
             JOIN Pet p ON a.PetID = p.PetID
             ORDER BY i.InvoiceID ASC
         `);
+		logger.info('INVOICE', `Retrieved all ${rows.length} invoices.`);
 		res.json(rows);
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -631,9 +669,10 @@ app.get('/api/invoices/:id', authenticateToken, authorizeRoles(['Admin']), async
 		if (rows.length === 0) {
 			return res.status(404).json({ message: 'Invoice not found' });
 		}
+		logger.info('INVOICE', `Retrieved invoice ${id}.`);
 		res.json(rows[0]);
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -648,7 +687,7 @@ app.get('/api/appointments/:appointmentId/invoice', authenticateToken, authorize
 		}
 		res.json(rows[0]);
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -661,9 +700,10 @@ app.post('/api/invoices', authenticateToken, authorizeRoles(['Admin']), async (r
 			'INSERT INTO Invoice (AppointmentID, Amount, Status, DueDate) VALUES ($1, $2, $3, $4) RETURNING *',
 			[AppointmentID, Amount, Status, DueDate]
 		);
+		logger.info('INVOICE', `New invoice (ID: ${rows[0].invoiceid}) created for appointment ${AppointmentID}.`);
 		res.status(201).json(rows[0]);
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -686,6 +726,7 @@ app.put('/api/invoices/:id', authenticateToken, authorizeRoles(['Admin']), async
 		if (rows.length === 0) {
 			return res.status(404).json({ message: 'Invoice not found' });
 		}
+		logger.info('INVOICE', `Invoice ${id} updated to status '${status}'.`);
 
 		// If status changed to 'Paid', send a confirmation email
 		if (status === 'Paid' && oldStatus !== 'Paid') {
@@ -722,13 +763,14 @@ app.put('/api/invoices/:id', authenticateToken, authorizeRoles(['Admin']), async
 					const htmlBody = textBody.replace(/\n/g, '<br>');
 
 					await sendEmail(email, subject, textBody, htmlBody);
+					logger.info('EMAIL', `Sent 'Invoice Paid' confirmation to ${email}.`);
 				}
 			}
 		}
 
 		res.json(rows[0]);
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -741,9 +783,10 @@ app.delete('/api/invoices/:id', authenticateToken, authorizeRoles(['Admin']), as
 		if (rowCount === 0) {
 			return res.status(404).json({ message: 'Invoice not found' });
 		}
+		logger.info('INVOICE', `Invoice ${id} deleted successfully.`);
 		res.json({ message: 'Invoice deleted successfully' });
 	} catch (err) {
-		console.error(err.message);
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
 		res.status(500).send('Server error');
 	}
 });
@@ -762,7 +805,7 @@ app.get('/api/settings', authenticateToken, authorizeRoles(['Admin']), async (re
         }, {});
         res.json(settingsMap);
     } catch (err) {
-        console.error(err.message);
+        logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
         res.status(500).send('Server error');
     }
 });
@@ -783,11 +826,11 @@ app.put('/api/settings', authenticateToken, authorizeRoles(['Admin']), async (re
         }
 
         await pool.query('COMMIT');
-        
+        logger.info('SETTINGS', `Settings updated successfully by admin ${req.user.id}.`);
         res.json({ message: 'Settings updated successfully' });
     } catch (err) {
         await pool.query('ROLLBACK');
-        console.error('Error updating settings:', err.message);
+        logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
         res.status(500).send('Server error');
     }
 });
@@ -805,7 +848,7 @@ app.get('/api/client/notifications', authenticateToken, authorizeRoles(['Client'
         );
         res.json(rows);
     } catch (err) {
-        console.error(err.message);
+        logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
         res.status(500).send('Server error');
     }
 });
@@ -818,9 +861,10 @@ app.put('/api/notifications/read-all', authenticateToken, authorizeRoles(['Clien
             'UPDATE Notification SET IsRead = TRUE WHERE ClientID = $1',
             [clientId]
         );
+		logger.info('NOTIFICATION', `All notifications marked as read for client ${clientId}.`);
         res.status(204).send(); // No content
     } catch (err) {
-        console.error(err.message);
+        logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
         res.status(500).send('Server error');
     }
 });
@@ -831,6 +875,7 @@ app.post('/api/reminders/send', async (req, res) => {
 	// Secure the endpoint with a secret key
 	const cronSecret = req.headers['x-cron-secret'];
 	if (cronSecret !== process.env.CRON_SECRET) {
+		logger.warn('AUTH', 'Unauthorized attempt to access cron reminder endpoint.');
 		return res.status(401).json({ message: 'Unauthorized: Invalid secret.'});
 	}
 
@@ -875,6 +920,7 @@ app.post('/api/reminders/send', async (req, res) => {
 
 			await sendEmail(appt.email, subject, textBody, htmlBody);
 			await pool.query('UPDATE Appointment SET ReminderSent24h = TRUE WHERE AppointmentID = $1', [appt.appointmentid]);
+			logger.info('EMAIL', `Sent 24-hour reminder to ${appt.email} for appointment ${appt.appointmentid}.`);
 		}
 
 		// --- 1-Hour Reminders ---
@@ -903,8 +949,10 @@ app.post('/api/reminders/send', async (req, res) => {
 
 			await sendEmail(appt.email, subject, textBody, htmlBody);
 			await pool.query('UPDATE Appointment SET ReminderSent1h = TRUE WHERE AppointmentID = $1', [appt.appointmentid]);
+			logger.info('EMAIL', `Sent 1-hour reminder to ${appt.email} for appointment ${appt.appointmentid}.`);
 		}
 
+		logger.info('CRON', `Reminder job completed. Sent ${twentyFourHourReminders.rowCount} 24h reminders and ${oneHourReminders.rowCount} 1h reminders.`);
 		res.json({ 
 			message: 'Reminder check completed.',
 			sent24h: twentyFourHourReminders.rowCount,
@@ -912,7 +960,7 @@ app.post('/api/reminders/send', async (req, res) => {
 		});
 
 	} catch (err) {
-		console.error('Error running reminder job:', err.message);
+		logger.error('CRON', `Error running reminder job: ${err.message}`);
 		res.status(500).send('Server error during reminder job.');
 	}
 });
@@ -921,13 +969,13 @@ app.post('/api/reminders/send', async (req, res) => {
 // Wrap server startup in a database connection check
 pool.connect()
   .then(client => {
-    console.log('Database connected successfully!');
+    logger.info('SYSTEM', 'Database connected successfully!');
     client.release(); // Release the client back to the pool
     app.listen(port, () => {
-      console.log(`Backend server listening at http://localhost:${port}`);
+      logger.info('SYSTEM', `Backend server listening at http://localhost:${port}`);
     });
   })
   .catch(err => {
-    console.error('FATAL: Failed to connect to the database.', err);
+    logger.error('FATAL', 'Failed to connect to the database.', err);
     process.exit(1);
   });
