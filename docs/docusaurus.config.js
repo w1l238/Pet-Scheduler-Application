@@ -27,7 +27,7 @@ const config = {
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'your-github-org', // Usually your GitHub org/user name.
+  organizationName: 'w1l238', // Usually your GitHub org/user name.
   projectName: 'Pet-Scheduler-Application', // Usually your repo name.
 
   onBrokenLinks: 'throw',
@@ -50,23 +50,9 @@ const config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/your-github-org/Pet-Scheduler-Application/tree/main/docs/',
+            'https://github.com/w1l238/Pet-Scheduler-Application/tree/main/docs/',
         },
-        blog: {
-          showReadingTime: true,
-          feedOptions: {
-            type: ['rss', 'atom'],
-            xslt: true,
-          },
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/your-github-org/Pet-Scheduler-Application/tree/main/docs/',
-          // Useful options to enforce blogging best practices
-          onInlineTags: 'warn',
-          onInlineAuthors: 'warn',
-          onUntruncatedBlogPosts: 'warn',
-        },
+        blog: false, // Disable the blog feature
         theme: {
           customCss: './src/css/custom.css',
         },
@@ -87,6 +73,7 @@ const config = {
         logo: {
           alt: 'Pet Scheduler Application Logo',
           src: 'img/logo.svg',
+          href: '/docs/project-overview', // Link logo to the project overview page
         },
         items: [
           {
@@ -95,9 +82,8 @@ const config = {
             position: 'left',
             label: 'Documentation',
           },
-          {to: '/blog', label: 'Blog', position: 'left'},
           {
-            href: 'https://github.com/your-github-org/Pet-Scheduler-Application',
+            href: 'https://github.com/w1l238/Pet-Scheduler-Application',
             label: 'GitHub',
             position: 'right',
           },
@@ -136,12 +122,8 @@ const config = {
             title: 'More',
             items: [
               {
-                label: 'Blog',
-                to: '/blog',
-              },
-              {
                 label: 'GitHub',
-                href: 'https://github.com/your-github-org/Pet-Scheduler-Application',
+                href: 'https://github.com/w1l238/Pet-Scheduler-Application',
               },
             ],
           },
