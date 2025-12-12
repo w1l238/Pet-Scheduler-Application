@@ -18,13 +18,13 @@ Roles (`Admin`, `Client`) are used to control access to certain endpoints.
 
 *   **`POST /api/auth/register`**
     *   **Description:** Registers a new client.
-    *   **Request Body:** `{ "FirstName": "John", "LastName": "Doe", "Email": "john.doe@example.com", "Password": "password123" }`
-    *   **Response:** `{ "token": "..." }`
+    *   **Request Body:** `{ "FirstName": "John", "LastName": "Doe", "Email": "john.doe@example.com", "PhoneNumber": "555-123-4567", "Password": "password123" }`
+    *   **Response:** `{ "message": "User registrered successfully", "user": { "ClientID": 1, "Email": "john.doe@example.com", "Role": "Client" } }`
 
 *   **`POST /api/auth/login`**
     *   **Description:** Logs in a client and returns a JWT.
     *   **Request Body:** `{ "Email": "john.doe@example.com", "Password": "password123" }`
-    *   **Response:** `{ "token": "...", "user": { "id": 1, "role": "Client" } }`
+    *   **Response:** `{ "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." }`
 
 ### Public Appointments
 
