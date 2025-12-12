@@ -18,13 +18,13 @@ Roles (`Admin`, `Client`) are used to control access to certain endpoints.
 
 *   **`POST /api/auth/register`**
     *   **Description:** Registers a new client.
-    *   **Request Body:** `{ "FirstName": "John", "LastName": "Doe", "Email": "john.doe@example.com", "PhoneNumber": "555-123-4567", "Password": "password123" }`
+    *   **Request Body:** `{ "FirstName": "John", "LastName": "Doe", "Email": "john.doe@example.com", "PhoneNumber": "555-123-4567", "Password": "password123", "ProfilePhotoPath": "/uploads/default-user.jpg", "ProfilePhotoHash": "some-hash" }`
     *   **Response:** `{ "message": "User registrered successfully", "user": { "ClientID": 1, "Email": "john.doe@example.com", "Role": "Client" } }`
 
 *   **`POST /api/auth/login`**
     *   **Description:** Logs in a client and returns a JWT.
     *   **Request Body:** `{ "Email": "john.doe@example.com", "Password": "password123" }`
-    *   **Response:** `{ "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." }`
+    *   **Response:** `{ "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", "user": { "id": 1, "role": "Client" } }`
 
 ### Public Appointments
 
@@ -36,7 +36,15 @@ Roles (`Admin`, `Client`) are used to control access to certain endpoints.
 
 ## Protected Routes
 
-## Clients
+### File Upload
+
+*   **`POST /api/upload`**
+    *   **Auth:** Authenticated User
+    *   **Description:** Uploads a profile photo for a client or pet. Handles duplicate file detection using hashing.
+    *   **Request Body:** `multipart/form-data` with a field named `profilePhoto` containing the image file.
+    *   **Response:** `{ "filePath": "/uploads/unique-hash.jpg", "fileHash": "unique-hash" }`
+
+### Clients
 
 *   **`GET /api/clients`**
     *   **Auth:** Admin
@@ -50,8 +58,8 @@ Roles (`Admin`, `Client`) are used to control access to certain endpoints.
 
 *   **`PUT /api/clients/:id`**
     *   **Auth:** Admin, or the client themselves.
-    *   **Description:** Updates a client's information. Non-admins cannot change their role.
-    *   **Request Body:** `{ "FirstName": "Johnny", "PhoneNumber": "555-555-5555" }`
+    *   **Description:** Updates a client's information, including their profile photo path and hash. Non-admins cannot change their role.
+    *   **Request Body:** `{ "FirstName": "Johnny", "PhoneNumber": "555-555-5555", "ProfilePhotoPath": "/uploads/new-photo.jpg", "ProfilePhotoHash": "new-hash" }`
     *   **Response:** `{ "ClientID": 1, "FirstName": "Johnny", ... }`
 
 *   **`DELETE /api/clients/:id`**
@@ -59,7 +67,12 @@ Roles (`Admin`, `Client`) are used to control access to certain endpoints.
     *   **Description:** Deletes a client by their ID.
     *   **Response:** `{ "message": "Client deleted successfully" }`
 
-## Pets
+*   **`DELETE /api/clients/:id/photo`**
+    *   **Auth:** Admin, or the client themselves.
+    *   **Description:** Deletes a client's profile photo.
+    *   **Response:** `{ "message": "Profile photo deleted successfully" }`
+
+### Pets
 
 *   **`GET /api/pets`**
     *   **Auth:** Admin
@@ -79,13 +92,13 @@ Roles (`Admin`, `Client`) are used to control access to certain endpoints.
 *   **`POST /api/pets`**
     *   **Auth:** Authenticated User (for their own profile)
     *   **Description:** Adds a new pet to the authenticated user's profile.
-    *   **Request Body:** `{ "ClientID": 1, "Name": "Lucy", "Breed": "Golden Retriever", ... }`
+    *   **Request Body:** `{ "ClientID": 1, "Name": "Lucy", "Breed": "Golden Retriever", "ProfilePhotoPath": "/uploads/lucy.jpg", ... }`
     *   **Response:** `{ "PetID": 2, "Name": "Lucy", ... }`
 
 *   **`PUT /api/pets/:id`**
     *   **Auth:** Admin, or the pet's owner.
-    *   **Description:** Updates a pet's information.
-    *   **Request Body:** `{ "Name": "Lucy", "Age": 3 }`
+    *   **Description:** Updates a pet's information, including its profile photo path and hash.
+    *   **Request Body:** `{ "Name": "Lucy", "Age": 3, "ProfilePhotoPath": "/uploads/new-pet-photo.jpg", "ProfilePhotoHash": "new-hash" }`
     *   **Response:** `{ "PetID": 2, "Name": "Lucy", "Age": 3, ... }`
 
 *   **`DELETE /api/pets/:id`**
@@ -93,7 +106,12 @@ Roles (`Admin`, `Client`) are used to control access to certain endpoints.
     *   **Description:** Deletes a pet by its ID.
     *   **Response:** `{ "message": "Pet deleted successfully" }`
 
-## Appointments
+*   **`DELETE /api/pets/:id/photo`**
+    *   **Auth:** Admin, or the pet's owner.
+    *   **Description:** Deletes a pet's profile photo.
+    *   **Response:** `{ "message": "Profile photo deleted successfully" }`
+
+### Appointments
 
 *   **`GET /api/appointments`**
     *   **Auth:** Admin
@@ -104,6 +122,11 @@ Roles (`Admin`, `Client`) are used to control access to certain endpoints.
     *   **Auth:** Admin, or the involved client.
     *   **Description:** Retrieves a single appointment by its ID.
     *   **Response:** `{ "AppointmentID": 1, "Status": "Scheduled", ... }`
+
+*   **`GET /api/client/appointments`**
+    *   **Auth:** Authenticated User (Client)
+    *   **Description:** Retrieves all appointments for the currently logged-in client.
+    *   **Response:** `[ { "AppointmentID": 1, ... } ]`
 
 *   **`GET /api/clients/:clientId/appointments`**
     *   **Auth:** Admin, or the client themselves.
@@ -119,7 +142,7 @@ Roles (`Admin`, `Client`) are used to control access to certain endpoints.
 *   **`PUT /api/appointments/:id`**
     *   **Auth:** Admin, or the involved client.
     *   **Description:** Updates an appointment's status or details. If an admin changes the status, a notification is created for the client. If status is changed to 'Completed', an invoice is automatically generated.
-    *   **Request Body:** `{ "status": "Completed" }`
+    *   **Request Body:** `{ "status": "Completed", "clientId": 1, "petId": 1, "serviceId": 1, "appointmentTime": "2025-12-25T10:00:00Z", "notes": "Some notes" }`
     *   **Response:** `{ "AppointmentID": 1, "Status": "Completed", ... }`
 
 *   **`DELETE /api/appointments/:id`**
@@ -127,7 +150,7 @@ Roles (`Admin`, `Client`) are used to control access to certain endpoints.
     *   **Description:** Deletes an appointment.
     *   **Response:** `{ "message": "Appointment deleted successfully" }`
 
-## Services
+### Services
 
 *   **`GET /api/services`**
     *   **Auth:** Authenticated User
@@ -155,32 +178,48 @@ Roles (`Admin`, `Client`) are used to control access to certain endpoints.
     *   **Description:** Soft-deletes a service by marking it as inactive.
     *   **Response:** `{ "message": "Service archived successfully" }`
 
-## Invoices
+### Invoices
 
 *   **`GET /api/invoices`**
     *   **Auth:** Admin
     *   **Description:** Retrieves all invoices, including client and pet names.
-    *   **Response:** `[ { "InvoiceID": 1, "Amount": 50.00, "Status": "Unpaid", ... } ]`
+    *   **Response:** `[ { "InvoiceID": 1, "Amount": 50.00, "Status": "Unpaid", "FirstName": "John", "PetName": "Buddy", ... } ]`
+
+*   **`GET /api/invoices/:id`**
+    *   **Auth:** Admin
+    *   **Description:** Retrieves a single invoice by its ID.
+    *   **Response:** `{ "InvoiceID": 1, "Amount": 50.00, ... }`
+
+*   **`GET /api/appointments/:appointmentId/invoice`**
+    *   **Auth:** Admin
+    *   **Description:** Retrieves the invoice associated with a specific appointment ID.
+    *   **Response:** `{ "InvoiceID": 1, "AppointmentID": 1, "Amount": 50.00, ... }`
+
+*   **`POST /api/invoices`**
+    *   **Auth:** Admin
+    *   **Description:** Creates a new invoice.
+    *   **Request Body:** `{ "AppointmentID": 1, "Amount": 50.00, "Status": "Unpaid", "DueDate": "2025-01-01" }`
+    *   **Response:** `{ "InvoiceID": 2, "AppointmentID": 1, ... }`
 
 *   **`PUT /api/invoices/:id`**
     *   **Auth:** Admin
     *   **Description:** Updates an invoice, typically to mark it as 'Paid'. Sends a confirmation email to the client upon payment.
-    *   **Request Body:** `{ "status": "Paid" }`
+    *   **Request Body:** `{ "appointmentid": 1, "amount": 50.00, "status": "Paid", "duedate": "2025-01-01" }`
     *   **Response:** `{ "InvoiceID": 1, "Status": "Paid", ... }`
 
-## Notifications
+### Notifications
 
 *   **`GET /api/client/notifications`**
     *   **Auth:** Client
     *   **Description:** Retrieves all unread notifications for the logged-in client.
-    *   **Response:** `[ { "NotificationID": 1, "Message": "Your appointment has been approved.", ... } ]`
+    *   **Response:** `[ { "NotificationID": 1, "Message": "Your appointment has been approved.", "IsRead": false, "Link": "/client/appointments", "CreatedAt": "2025-01-01T10:00:00Z" } ]`
 
 *   **`PUT /api/notifications/read-all`**
     *   **Auth:** Client
     *   **Description:** Marks all of the logged-in client's notifications as read.
     *   **Response:** `204 No Content`
 
-## Settings
+### Settings
 
 *   **`GET /api/settings`**
     *   **Auth:** Admin
@@ -193,7 +232,7 @@ Roles (`Admin`, `Client`) are used to control access to certain endpoints.
     *   **Request Body:** `{ "business_name": "My Grooming Business", "cancellation_policy": "48 hours notice required." }`
     *   **Response:** `{ "message": "Settings updated successfully" }`
 
-## Reminders
+### Reminders
 
 *   **`POST /api/reminders/send`**
     *   **Auth:** Cron Job (Requires `x-cron-secret` header)

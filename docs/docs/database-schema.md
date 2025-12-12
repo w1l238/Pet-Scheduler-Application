@@ -6,7 +6,7 @@ Below is a description of each table and its columns.
 
 ---
 
-### `Client`
+## Client
 Stores information about the users of the application.
 
 | Column            | Type                      | Constraints                               | Description                                                                 |
@@ -17,13 +17,14 @@ Stores information about the users of the application.
 | `Email`           | `VARCHAR(100)`            | `UNIQUE`, `NOT NULL`                      | The client's email address, used for login and communication.               |
 | `PhoneNumber`     | `VARCHAR(20)`             |                                           | The client's phone number.                                                  |
 | `PasswordHash`    | `TEXT`                    | `NOT NULL`                                | The hashed password for the client's account.                               |
-| `ProfilePhotoURL` | `TEXT`                    | `DEFAULT`                                 | URL to the client's profile picture.                                        |
+| `ProfilePhotoPath` | `TEXT` | | URL to the client's profile picture. |
+| `ProfilePhotoHash` | `TEXT` | | Hash of the client's profile picture for duplicate detection. |
 | `CreatedAt`       | `TIMESTAMP WITH TIME ZONE`| `DEFAULT CURRENT_TIMESTAMP`               | Timestamp of when the client account was created.                           |
 | `Role`            | `VARCHAR(20)`             | `NOT NULL`, `DEFAULT 'Client'`            | The user's role, either 'Client' or 'Admin'.                                |
 
 ---
 
-### `Pet`
+## Pet
 Stores information about the clients' pets.
 
 | Column          | Type                      | Constraints                               | Description                                                                 |
@@ -34,12 +35,13 @@ Stores information about the clients' pets.
 | `Breed`         | `VARCHAR(50)`             |                                           | The pet's breed.                                                            |
 | `Age`           | `INT`                     |                                           | The pet's age.                                                              |
 | `Notes`         | `TEXT`                    |                                           | Any relevant notes about the pet.                                           |
-| `ProfilePhotoURL`| `TEXT`                   | `DEFAULT`                                 | URL to the pet's profile picture.                                           |
+| `ProfilePhotoPath` | `TEXT` | | URL to the pet's profile picture. |
+| `ProfilePhotoHash` | `TEXT` | | Hash of the pet's profile picture for duplicate detection. |
 | `CreatedAt`     | `TIMESTAMP WITH TIME ZONE`| `DEFAULT CURRENT_TIMESTAMP`               | Timestamp of when the pet profile was created.                              |
 
 ---
 
-### `Service`
+## Service
 Stores information about the services offered by the business.
 
 | Column          | Type          | Constraints           | Description                               |
@@ -53,7 +55,7 @@ Stores information about the services offered by the business.
 
 ---
 
-### `Appointment`
+## Appointment
 Stores information about appointments.
 
 | Column            | Type                      | Constraints                               | Description                                                                 |
@@ -71,7 +73,7 @@ Stores information about appointments.
 
 ---
 
-### `Invoice`
+## Invoice
 Stores information about invoices generated from completed appointments.
 
 | Column        | Type                      | Constraints                               | Description                                                         |
@@ -85,7 +87,7 @@ Stores information about invoices generated from completed appointments.
 
 ---
 
-### `Notification`
+## Notification
 Stores notifications for clients regarding their appointments.
 
 | Column         | Type                      | Constraints                               | Description                                                         |
@@ -99,11 +101,76 @@ Stores notifications for clients regarding their appointments.
 
 ---
 
-### `Settings`
+## Settings
 A key-value table to store various application-wide settings and configurations.
 
 | Column    | Type          | Constraints     | Description                               |
 | --------- | ------------- | --------------- | ----------------------------------------- |
 | `SettingID`| `SERIAL`     | `PRIMARY KEY`   | Unique identifier for the setting.        |
-| `Name`    | `VARCHAR(255)`| `UNIQUE`, `NOT NULL` | The unique name (key) of the setting.     |
+| `Name`    | `VARCHAR(255)`| `UNIQUE`, `NOT NULL` | The unique name (key) of the setting.|
 | `Value`   | `TEXT`        |                 | The value of the setting.                 |
+
+### Default Settings
+
+The following default settings are inserted into the `Settings` table upon database initialization:
+
+```sql
+INSERT INTO Settings (Name, Value) VALUES 
+('email_reminder_24h_subject', 'Reminder: Your upcoming appointment with Pet Scheduler'),
+('email_reminder_24h_body', 'Dear {{client_name}},
+
+This is a reminder that your pet, {{pet_name}}, has an appointment scheduled for {{appointment_date}} at {{appointment_time}}.
+
+Thank you,
+Pet Scheduler
+
+--
+{{business_name}}
+{{business_address}}
+{{business_phone}}
+{{business_email}}'),
+('email_reminder_1h_subject', 'Reminder: Your appointment is in one hour'),
+('email_reminder_1h_body', 'Dear {{client_name}},
+
+This is a reminder that your pet, {{pet_name}}, has an appointment in one hour at {{appointment_time}}.
+
+See you soon,
+Pet Scheduler
+
+--
+{{business_name}}
+{{business_address}}
+{{business_phone}}
+{{business_email}}');
+
+-- Insert default values for invoice settings
+INSERT INTO Settings (Name, Value) VALUES ('invoice_due_days', '30');
+INSERT INTO Settings (Name, Value) VALUES ('invoice_footer', 'Thank you for your business!');
+
+-- Insert default values for business profile
+INSERT INTO Settings (Name, Value) VALUES ('business_name', 'Pet Scheduler');
+INSERT INTO Settings (Name, Value) VALUES ('business_address', '123 Main St, Anytown, USA');
+INSERT INTO Settings (Name, Value) VALUES ('business_phone', '555-123-4567');
+INSERT INTO Settings (Name, Value) VALUES ('business_email', 'contact@petscheduler.com');
+
+-- Insert default values for booking and appointment rules
+INSERT INTO Settings (Name, Value) VALUES ('booking_minimum_notice_hours', '24');
+INSERT INTO Settings (Name, Value) VALUES ('cancellation_policy', 'Please provide at least 24 hours notice for any cancellations.');
+
+
+-- Insert default values for invoice paid email
+INSERT INTO Settings (Name, Value) VALUES ('invoice_paid_subject', 'Your invoice has been paid');
+INSERT INTO Settings (Name, Value) VALUES ('invoice_paid_body', 'Dear {{client_name}},
+
+This is a confirmation that your invoice for {{amount}} has been paid.
+
+Thank you for your business!
+
+--
+{{business_name}}
+{{business_address}}
+{{business_phone}}
+{{business_email}}');
+```
+
+These insert statements are used to create default entries for the Business Profile, Email Templates, Invoice Settings, and Booking Rules.

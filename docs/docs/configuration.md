@@ -76,6 +76,7 @@ When running the frontend locally, create a `.env` file in the `frontend/` direc
 Example `frontend/.env`:
 ```
 REACT_APP_API_BASE_URL=http://localhost:5000/api
+REACT_APP_DOCS_URL=http://localhost:3001
 ```
 
 ### Docker Deployment (`docker-compose.yml`)
@@ -83,12 +84,13 @@ REACT_APP_API_BASE_URL=http://localhost:5000/api
 When running with Docker Compose, the frontend environment variables are defined directly within the `frontend` service section of the `docker-compose.yml` file.
 
 *   **`REACT_APP_API_BASE_URL`**: The base URL of the backend API. When running in Docker, this should refer to the backend service name within the Docker network (e.g., `http://backend:5000/api`).
-
+*   **`REACT_APP_DOCS_URL`**L The base URL of the documentation server. When running in Docker, this should refer to the backend service itself (not the container name) (e.g. `http://localhost:3001`)
 Example `docker-compose.yml` snippet for frontend environment:
 ```yaml
   frontend:
     # ... other configurations ...
     environment:
       REACT_APP_API_BASE_URL: http://backend:5000/api
+      REACT_APP_DOCS_URL: http://localhost:3001
     # ...
 ```

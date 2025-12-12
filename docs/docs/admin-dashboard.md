@@ -16,11 +16,11 @@ Admins can manage all client appointments. This includes:
 ### Client Management
 Admins have full control over client records:
 *   View a list of all registered clients and search by name.
-*   Edit client information, including their name, contact details, and role (Client or Admin).
+*   Edit client information, including their name, contact details, role (Client or Admin), and profile photo.
 *   Delete client accounts.
 
 ### Pet Management
-Admins can view and manage all pets registered in the system, including viewing their profiles and deleting records if necessary.
+Admins can view and manage all pets registered in the system, including viewing their profiles, managing their profile photos, and deleting records if necessary.
 
 ### Service Management
 This section allows admins to define the services offered by the business:

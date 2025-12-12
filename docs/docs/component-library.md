@@ -26,6 +26,7 @@ These components are the primary views for admins to manage different parts of t
 
 ### Forms & Modals
 *   **`EditClientModal.js`**: A modal form for editing the details of a client, including their role.
+*   **`EditPetModalAdmin.js`**: A modal form for admins to edit the details of a pet.
 *   **`ServiceForm.js`**: A unified form used for both creating and editing services.
 *   **`EditAdminProfileModal.js`**: A modal for admins to edit their own profile information.
 *   **`EditBusinessProfileModal.js`**: A modal for admins to update the public-facing business information (name, address, etc.).
@@ -63,3 +64,4 @@ These components are the primary views for admins to manage different parts of t
 *   **`Notifications.js`**: The dropdown panel for admins that shows pending appointment requests, allowing for quick approval or denial.
 *   **`ClientNotifications.js`**: The dropdown panel for clients that shows status updates and other notifications related to their account.
 *   **`ConfirmationModal.js`**: A generic modal used to confirm a user's action, such as deleting a record.
+*   **`Toast.js`**: A component for displaying transient success or error messages to the user.
