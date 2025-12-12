@@ -9,6 +9,10 @@ RUN npm install
 
 COPY . .
 
+# Add ARG and ENV for REACT_APP_DOCS_URL
+ARG REACT_APP_DOCS_URL
+ENV REACT_APP_DOCS_URL=$REACT_APP_DOCS_URL
+
 RUN npm run build
 
 # Stage 2: Serve the React application with Nginx
