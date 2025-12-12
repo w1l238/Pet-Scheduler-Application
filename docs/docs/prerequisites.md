@@ -18,14 +18,14 @@ Node.js is a JavaScript runtime environment required for both the frontend (Reac
 
 PostgreSQL is the relational database used by the application to store all data.
 
-*   **Installed Version:** 18.1
+*   **Developed & Tested With:** 18.1
 *   **Download:** [PostgreSQL Official Website](https://www.postgresql.org/download/)
 
 ## 3. Docker and Docker Compose
 
 Docker and Docker Compose are used to containerize the application, providing a consistent development and deployment environment.
 
-*   **Installed Docker Version:** 29.1.1
+*   **Developed & Tested With:** Docker 29.1.1
 *   **Download:** [Docker Official Website](https://www.docker.com/products/docker-desktop/)
 *   **Note:** Docker Compose is typically bundled with Docker Desktop.
 
@@ -33,7 +33,7 @@ Docker and Docker Compose are used to containerize the application, providing a 
 
 Git is a version control system used for managing the project's codebase. Including downloading the project's files to run them.
 
-*   **Installed Version:** 2.52.0
+*   **Developed & Tested With:** 2.52.0
 *   **Download:** [Git Official Website](https://git-scm.com/downloads)
 
 Please ensure all prerequisites are installed and correctly configured before proceeding with the installation steps.
