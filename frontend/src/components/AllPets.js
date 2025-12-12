@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; // Removed Link
 import api from '../api';
 import ConfirmationModal from './ConfirmationModal'; // Import the new modal
+import EditPetModalAdmin from './EditPetModalAdmin'; // Import the admin edit pet modal
 import './AllPets.css'; // Import animation styles
 
 function AllPets() {
@@ -16,6 +17,10 @@ function AllPets() {
     // State for confirmation modal
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [petToDeleteId, setPetToDeleteId] = useState(null);
+
+    // State for edit modal
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [petToEdit, setPetToEdit] = useState(null);
 
     const navigate = useNavigate(); // Initialize useNavigate
 
@@ -65,6 +70,23 @@ function AllPets() {
     const cancelDelete = () => {
         setShowConfirmModal(false);
         setPetToDeleteId(null);
+    };
+
+    const handleEditPet = (pet) => {
+        setPetToEdit(pet);
+        setShowEditModal(true);
+    };
+
+    const handleCloseEditModal = () => {
+        setShowEditModal(false);
+        setPetToEdit(null);
+    };
+
+    const handlePetUpdated = (updatedPet) => {
+        setPets(prevPets => prevPets.map(pet =>
+            pet.petid === updatedPet.petid ? { ...pet, ...updatedPet } : pet
+        ));
+        // setVersion(v => v + 1); // Removed to prevent full re-fetch
     };
 
     const filteredAndSortedPets = pets
@@ -126,12 +148,21 @@ function AllPets() {
                 <ul className="dashboard-list">
                     {filteredAndSortedPets.map(pet => (
                         <li key={pet.petid} className="dashboard-list-item" onClick={() => navigate(`/admin/pet/${pet.petid}`)}>
-                            <img src={pet.profilephotourl || 'https://via.placeholder.com/50'} alt={`${pet.name}'s profile`} className="item-photo" />
+                            {pet.profilephotopath ? (
+                                <img src={`${process.env.REACT_APP_API_BASE_URL}${pet.profilephotopath}`} alt={`${pet.name}'s profile`} className="item-photo pet-profile-photo" />
+                            ) : (
+                                <div className="profile-photo-placeholder item-photo">
+                                    {pet.name ? pet.name.charAt(0).toUpperCase() : '?'}
+                                </div>
+                            )}
                                 <div className="item-details">
                                     <strong>{pet.name}</strong> ({pet.breed || 'N/A'}) - {pet.age ? `${pet.age} years old` : 'Age not specified'}
                                     <p>Owner: {pet.firstname} {pet.lastname}</p>
                                 </div>
                             <div className="item-actions">
+                                <button onClick={(e) => { e.stopPropagation(); handleEditPet(pet); }} className="edit-button">
+                                    Edit
+                                </button>
                                 <button onClick={(e) => { e.stopPropagation(); handleDeletePet(pet.petid); }} className="delete-button">
                                     Delete
                                 </button>
@@ -147,6 +178,14 @@ function AllPets() {
                 onConfirm={confirmDelete}
                 onCancel={cancelDelete}
             />
+
+            {showEditModal && (
+                <EditPetModalAdmin
+                    pet={petToEdit}
+                    onClose={handleCloseEditModal}
+                    onPetUpdated={handlePetUpdated}
+                />
+            )}
         </div>
     );
 }
