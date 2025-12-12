@@ -14,9 +14,12 @@ if (process.env.DATABASE_URL) {
         user: process.env.DB_USER,
         host: process.env.DB_HOST,
         database: process.env.DB_DATABASE,
-        password: process.env.DB_PASSWORD,
         port: process.env.DB_PORT,
     };
+    // Only add password if it's not an empty string
+    if (process.env.DB_PASSWORD && process.env.DB_PASSWORD !== '') {
+        poolConfig.password = process.env.DB_PASSWORD;
+    }
 }
 
 const pool = new Pool(poolConfig);
