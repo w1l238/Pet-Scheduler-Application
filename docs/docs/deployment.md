@@ -1,6 +1,6 @@
 # Deployment
 
-This application is designed to be deployed using Docker, which simplifies the process and ensures a consistent environment.
+This application is designed to be deployed using Docker, which simplifies the process and ensures a consistent environment. However, you can use baremetal if you like.
 
 ## Prerequisites
 
@@ -18,41 +18,32 @@ cd Pet-Scheduler-Application
 ```
 
 ### 2. Configure Environment Variables
-The application uses `docker-compose.yml` for its configuration. You must create a `.env` file in the root of the project to supply the necessary environment variables for the Docker containers.
+The `docker-compose.yml` file contains the environment variables needed by the application. For a production deployment, you must edit this file directly to insert your own secrets.
 
-Create the file:
-```bash
-nano .env
+Open the `docker-compose.yml` file and locate the `environment` section for the `backend` service. Replace the placeholder values with your actual production secrets:
+
+```yaml
+  backend:
+    build: ./backend
+    container_name: pet_scheduler_backend
+    environment:
+      DATABASE_URL: postgres://user:password@db:5432/pet_scheduler_db
+      JWT_SECRET: your_super_secret_jwt_key_here # <-- CHANGE THIS
+      EMAIL_HOST: smtp.gmail.com # <-- CHANGE THIS
+      EMAIL_PORT: 587 # <-- CHANGE THIS
+      EMAIL_USER: your_email@gmail.com # <-- CHANGE THIS
+      EMAIL_PASS: your_gmail_app_password # <-- CHANGE THIS
+      CRON_SECRET: your_cron_job_secret_key # <-- CHANGE THIS
 ```
 
-And add the following content, replacing the placeholder values with your actual production secrets and configuration:
+Next, locate the `environment` section for the `frontend` service and update the `REACT_APP_API_BASE_URL` to point to your public domain or IP address.
 
-```env
-# PostgreSQL Database Credentials
-# These are used by the 'db' service in docker-compose.yml and should be kept secret.
-POSTGRES_USER=your_db_user
-POSTGRES_PASSWORD=your_strong_db_password
-POSTGRES_DB=pet_scheduler_db
-
-# Backend JWT Secret
-# A long, random, and secret string used to sign JSON Web Tokens.
-JWT_SECRET=your_super_secret_jwt_key
-
-# Backend Email Service Credentials (using Gmail as an example)
-# These are for the automated email reminders.
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASS=your_gmail_app_password # Use an "App Password" for security
-
-# Cron Job Secret
-# A secret key to protect the /api/reminders/send endpoint from public access.
-CRON_SECRET=your_cron_job_secret_key
-
-# Frontend API URL
-# The URL that the React frontend will use to communicate with the backend.
-# This should be the backend's address from the perspective of the user's browser.
-REACT_APP_API_URL=http://your_domain_or_ip/api
+```yaml
+  frontend:
+    build: ./frontend
+    container_name: pet_scheduler_frontend
+    environment:
+      REACT_APP_API_BASE_URL: http://your_domain_or_ip/api # <-- CHANGE THIS
 ```
 
 ### 3. Build and Run the Application
