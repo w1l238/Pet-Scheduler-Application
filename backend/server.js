@@ -349,6 +349,27 @@ app.get('/api/appointments/:id', authenticateToken, async (req, res) => {
 	}
 });
 
+// GET all appointments for the LOGGED-IN client
+app.get('/api/client/appointments', authenticateToken, async (req, res) => {
+	try {
+		const clientId = req.user.id; // Get client ID from token
+		const query = `
+            SELECT a.*, c.FirstName, c.LastName, p.Name as PetName
+            FROM Appointment a
+            JOIN Client c ON a.ClientID = c.ClientID
+            JOIN Pet p ON a.PetID = p.PetID
+            WHERE a.ClientID = $1
+            ORDER BY a.AppointmentID ASC
+        `;
+		const { rows } = await pool.query(query, [clientId]);
+		logger.info('APPOINTMENT', `Retrieved ${rows.length} appointments for logged-in client ${clientId}.`);
+		res.json(rows);
+	} catch (err) {
+		logger.error('API', `Error in ${req.method} ${req.originalUrl}: ${err.message}`);
+		res.status(500).send('Server error');
+	}
+});
+
 // GET all appointments for a specific client (Admin OR the client)
 app.get('/api/clients/:clientId/appointments', authenticateToken, async (req, res) => {
 	try {
