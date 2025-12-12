@@ -52,7 +52,13 @@ const PetProfilePage = () => {
         <div className="profile-page-container">
             <div className={`profile-card ${showPage ? 'show' : ''}`}>
                 <div className="profile-card-header">
-                    <img src={pet.profilephotourl || 'https://via.placeholder.com/150'} alt={`${pet.name}'s profile`} className="profile-photo" />
+                    {pet.profilephotopath ? (
+                        <img src={`${process.env.REACT_APP_API_BASE_URL}${pet.profilephotopath}`} alt={`${pet.name}'s profile`} className="profile-photo pet-profile-photo" />
+                    ) : (
+                        <div className="profile-photo-placeholder">
+                            {pet.name ? pet.name.charAt(0).toUpperCase() : '?'}
+                        </div>
+                    )}
                     <h1>{pet.name}</h1>
                 </div>
                 <div className="profile-card-body">

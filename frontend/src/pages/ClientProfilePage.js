@@ -95,7 +95,13 @@ const ClientProfilePage = () => {
         <div className="profile-page-container">
             <div className={`profile-card ${showPage ? 'show' : ''}`}>
                 <div className="profile-card-header">
-                    <img src={client.profilephotourl || 'https://via.placeholder.com/150'} alt={`${client.firstname}'s profile`} className="profile-photo" />
+                    {client.profilephotopath ? (
+                        <img src={`${process.env.REACT_APP_API_BASE_URL}${client.profilephotopath}`} alt={`${client.firstname}'s profile`} className="profile-photo" />
+                    ) : (
+                        <div className="profile-photo-placeholder">
+                            {client.firstname ? client.firstname.charAt(0).toUpperCase() : '?'}
+                        </div>
+                    )}
                     <h1>{client.firstname} {client.lastname}</h1>
                     <button onClick={() => setIsEditModalOpen(true)} className="edit-profile-button">
                         <FaUserEdit /> Edit Profile
@@ -120,7 +126,13 @@ const ClientProfilePage = () => {
                 <div className="pet-grid">
                     {pets.map(pet => (
                         <div key={pet.petid} className="pet-card" onClick={() => navigate(`/client/pet/${pet.petid}`)}>
-                            <img src={pet.profilephotourl || 'https://via.placeholder.com/150'} alt={`${pet.name}'s profile`} className="pet-card-photo" />
+                            {pet.profilephotopath ? (
+                                <img src={pet.profilephotopath ? `${process.env.REACT_APP_API_BASE_URL}${pet.profilephotopath}` : 'https://via.placeholder.com/150'} alt={`${pet.name.charAt(0).toUpperCase()}`} className="pet-card-photo pet-profile-photo" />
+                            ) : (
+                                <div className="profile-photo-placeholder pet-card-photo">
+                                    {pet.name ? pet.name.charAt(0).toUpperCase() : '?'}
+                                </div>
+                            )}
                             <div className="pet-card-name">{pet.name}</div>
                         </div>
                     ))}

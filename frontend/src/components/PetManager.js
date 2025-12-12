@@ -161,7 +161,13 @@ function PetManager({ version, onPetDeleted, onLoadComplete }) {
                 <ul className="dashboard-list">
                     {filteredAndSortedPets.map(pet => (
                         <li key={pet.petid} className="dashboard-list-item" onClick={() => navigate(`/client/pet/${pet.petid}`)}>
-                            <img src={pet.profilephotourl || 'https://via.placeholder.com/50'} alt={`${pet.name}'s profile`} className="item-photo" />
+                            {pet.profilephotopath ? (
+                                <img src={`${process.env.REACT_APP_API_BASE_URL}${pet.profilephotopath}`} alt={`${pet.name}'s profile`} className="item-photo pet-profile-photo" />
+                            ) : (
+                                <div className="profile-photo-placeholder item-photo">
+                                    {pet.name ? pet.name.charAt(0).toUpperCase() : '?'}
+                                </div>
+                            )}
                             <div className="item-details">
                                 <strong>{pet.name}</strong> ({pet.breed || 'N/A'}) - {pet.age ? `${pet.age} years old` : 'Age not specified'}
                                 {pet.notes && <p>Notes: {pet.notes}</p>}

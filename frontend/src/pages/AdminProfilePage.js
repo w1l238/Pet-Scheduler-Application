@@ -84,14 +84,19 @@ const AdminProfilePage = () => {
         return (
             <div className="profile-page-container">
                 <div className={`profile-card ${showPage ? 'show' : ''}`}>
-                    <div className="profile-card-header">
-                        <img src={admin.profilephotourl || 'https://via.placeholder.com/150'} alt={`${admin.firstname}'s profile`} className="profile-photo" />
-                        <h1>{admin.firstname} {admin.lastname}</h1>
-                        <button onClick={() => setIsEditModalOpen(true)} className="edit-profile-button">
-                            <FaUserEdit /> Edit Profile
-                        </button>
-                    </div>
-                    <div className="profile-card-body">
+                                    <div className="profile-card-header">
+                                        {admin.profilephotopath ? (
+                                            <img src={`${process.env.REACT_APP_API_BASE_URL}${admin.profilephotopath}`} alt={`${admin.firstname}'s profile`} className="profile-photo" />
+                                        ) : (
+                                            <div className="profile-photo-placeholder profile-photo">
+                                                {admin.firstname ? admin.firstname.charAt(0).toUpperCase() : '?'}
+                                            </div>
+                                        )}
+                                        <h1>{admin.firstname} {admin.lastname}</h1>
+                                        <button onClick={() => setIsEditModalOpen(true)} className="edit-profile-button">
+                                            <FaUserEdit /> Edit Profile
+                                        </button>
+                                    </div>                    <div className="profile-card-body">
                         <div className="profile-info-item">
                             <FaEnvelope className="info-icon" />
                             <span>{admin.email}</span>
