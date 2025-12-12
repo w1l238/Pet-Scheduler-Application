@@ -16,19 +16,24 @@ function AddPetModal({ onClose, onPetAdded }) {
         Breed: '',
         Age: '',
         Notes: '',
-        ProfilePhotoURL: '',
+        ProfilePhotoPath: '',
     });
     const [message, setMessage] = useState('');
     const [showModal, setShowModal] = useState(false);
+    const [selectedFile, setSelectedFile] = useState(null);
 
     useEffect(() => {
         const timer = setTimeout(() => setShowModal(true), 10);
         return () => clearTimeout(timer);
     }, []);
 
-    const { Name, Breed, Age, Notes, ProfilePhotoURL } = formData;
+    const { Name, Breed, Age, Notes } = formData;
 
     const onChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+    const onFileChange = e => {
+        setSelectedFile(e.target.files[0]);
+    };
 
     const handleClose = () => {
         setShowModal(false);
@@ -51,12 +56,25 @@ function AddPetModal({ onClose, onPetAdded }) {
                 return;
             }
 
-            const petData = { ...formData, ClientID: clientId };
+            let profilePhotoPath = '';
 
-            // If ProfilePhotoURL is empty, set it to the default image URL
-            if (!petData.ProfilePhotoURL) {
-                petData.ProfilePhotoURL = 'https://imgs.search.brave.com/K6W0zfpaPJCvOK3_7HIIoAJgsNfbgogZ64-WW8W7VhM/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9zdGF0/aWMudmVjdGVlenku/Y29tL3N5c3RlbS9y/ZXNvdXJjZXMvdGh1/bWJuYWlscy8wNjcv/ODE4LzMwOS9zbWFs/bC9taW5pbWFsaXN0/LWJsYWNrLWRvZy1z/aWxob3VldHRlLWlj/b24tdmVjdG9yLmpw/Zw';
+            // If a new file is selected, upload it first
+            if (selectedFile) {
+                const fileFormData = new FormData();
+                fileFormData.append('profilePhoto', selectedFile);
+                const uploadRes = await api.post('/upload', fileFormData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
+                profilePhotoPath = uploadRes.data.filePath;
             }
+
+            const petData = { 
+                ...formData, 
+                ClientID: clientId,
+                ProfilePhotoPath: profilePhotoPath
+            };
 
             await api.post('/pets', petData);
             setMessage('Pet added successfully!');
@@ -100,8 +118,8 @@ function AddPetModal({ onClose, onPetAdded }) {
                     />
                     </div>
                     <div className="form-group">
-                        <label>Profile Photo URL</label>
-                        <input type="text" name="ProfilePhotoURL" value={ProfilePhotoURL} onChange={onChange} placeholder="Image URL (Optional)" />
+                        <label>Profile Photo</label>
+                        <input type="file" name="profilePhoto" onChange={onFileChange} accept="image/*" />
                     </div>
                     <div className="modal-footer">
                         <button type="button" onClick={handleClose} className="cancel-button">Cancel</button>
