@@ -11,5 +11,5 @@
 - [x] Update documentation to reflect current implementation (specifically the api portion and schema).
 - [x] Make sure docker compose builds project and works.
 - [x] Git commit everything.
-- [ ] Deploy on server and host using my domain with cloudflare tunnels.
-- [ ] Write final report.
+- [x] Deploy on server and host using my domain with cloudflare tunnels.
+- [x] Write final report.
